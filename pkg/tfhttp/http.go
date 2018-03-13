@@ -157,7 +157,7 @@ func (proxy TFHttpProxy) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 	defer req.Body.Close()
-	modelName,modelVersion,modelSinature, err := parseRequestURI(proxy.URIPrefix,req.RequestURI)
+	modelName, modelVersion, modelSinature, err := parseRequestURI(proxy.URIPrefix, req.RequestURI)
 	if err != nil {
 		returnError = err
 		status = http.StatusBadRequest
@@ -284,7 +284,7 @@ func (proxy TFHttpProxy) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 			return
 		}
 	}
-	tContext, _ := context.WithTimeout(context.Background(),proxy.Timeout)
+	tContext, _ := context.WithTimeout(context.Background(), proxy.Timeout)
 	result, err := tf.CallTF(tContext, addr, modelName, modelVersion, modelSinature, model)
 	if err != nil {
 		returnError = fmt.Errorf("Failed call %v", err)
@@ -340,7 +340,7 @@ func (proxy TFHttpProxy) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 
 }
 
-func parseRequestURI(prefix,uri string) (model string,version int64,signature string, err error) {
+func parseRequestURI(prefix, uri string) (model string, version int64, signature string, err error) {
 	version = -1
 	if i := strings.Index(uri, prefix); i < 0 {
 		err = errors.New("Bad request path")
