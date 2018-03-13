@@ -151,6 +151,14 @@ func (proxy TFHttpProxy) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 		}
 	}()
 	addr := req.Header.Get("PROXY_ADDR")
+	sport := req.Header.Get("PROXY_PORT")
+	port := 9000
+	if sport != "" {
+		if v, err := strconv.Atoi(sport); err == nil {
+			port = v
+		}
+	}
+	addr = fmt.Sprintf("%s:%d", addr, port)
 	if req.Method != "POST" {
 		returnError = errors.New("Only POST request is supported")
 		status = http.StatusMethodNotAllowed
