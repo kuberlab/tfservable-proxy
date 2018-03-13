@@ -1,0 +1,13 @@
+package: github.com/kuberlab/tfservable-proxy
+import:
+- package: github.com/dreyk/tensorflow-serving-go
+  subpackages:
+  - pkg/tensorflow/core/example
+  - pkg/tensorflow/core/framework
+  - pkg/tensorflow_serving/apis
+- package: github.com/golang/protobuf
+  subpackages:
+  - ptypes/wrappers
+- package: google.golang.org/grpc
+  subpackages:
+  - encoding
