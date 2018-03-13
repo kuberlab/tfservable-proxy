@@ -9,6 +9,7 @@ import (
 	google_protobuf "github.com/golang/protobuf/ptypes/wrappers"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/encoding"
+	"errors"
 )
 
 type TFFeatureJSON struct {
@@ -220,12 +221,34 @@ func shapeContainer(dim []*tf.TensorShapeProto_Dim, data []interface{}) interfac
 	return res
 }
 
+func fillBaseTensor(data interface{}, proto *tf.TensorProto) error {
+	switch v := data.(type) {
+	case float64:
+		return addFloat64(proto.Dtype, proto, v)
+	case int64:
+		return addInt64(proto.Dtype, proto, v)
+	case int8:
+		return addInt64(proto.Dtype, proto, int64(v))
+	case int16:
+		return addInt64(proto.Dtype, proto, int64(v))
+	case int32:
+		return addInt64(proto.Dtype, proto, int64(v))
+	case int:
+		return addInt64(proto.Dtype, proto, int64(v))
+	case uint8:
+		return addInt64(proto.Dtype, proto, int64(v))
+	case uint16:
+		return addInt64(proto.Dtype, proto, int64(v))
+	case []byte:
+		return addBytes(proto.Dtype, proto, v)
+	case string:
+		return addString(proto.Dtype, proto, v)
+	}
+
+	return errors.New("Usuppotted type")
+}
 func fillTensor(data interface{}, proto *tf.TensorProto, index int) error {
 	switch v := data.(type) {
-	case []byte:
-		if err := addBytes(proto.Dtype, proto, v); err != nil {
-			return err
-		}
 	case []interface{}:
 		if index == 0 {
 			proto.TensorShape.Dim = append(proto.TensorShape.Dim, &tf.TensorShapeProto_Dim{
@@ -234,34 +257,16 @@ func fillTensor(data interface{}, proto *tf.TensorProto, index int) error {
 		}
 		for i, v1 := range v {
 			switch v2 := v1.(type) {
-			case string:
-				if err := addString(proto.Dtype, proto, v2); err != nil {
-					return err
-				}
 			case []interface{}:
 				fillTensor(v2, proto, i)
-			case float64:
-				if err := addFloat64(proto.Dtype, proto, v2); err != nil {
-					return err
-				}
-			case int64:
-				if err := addInt64(proto.Dtype, proto, v2); err != nil {
+			default:
+				if err:=fillBaseTensor(v2,proto);err!=nil{
 					return err
 				}
 			}
 		}
-	case string:
-		if err := addString(proto.Dtype, proto, v); err != nil {
-			return err
-		}
-	case float64:
-		if err := addFloat64(proto.Dtype, proto, v); err != nil {
-			return err
-		}
-	case int64:
-		if err := addInt64(proto.Dtype, proto, v); err != nil {
-			return err
-		}
+	default:
+		return fillBaseTensor(v,proto)
 	}
 	return nil
 }

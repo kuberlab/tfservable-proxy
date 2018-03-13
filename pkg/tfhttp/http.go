@@ -25,17 +25,152 @@ type TFHttpProxy struct {
 }
 
 type propertyParser func(feature *tf.TFFeatureJSON) (tf_core.DataType, func(val string) (interface{}, error))
+type binaryParser func(feature *tf.TFFeatureJSON, data []byte) (tf_core.DataType, interface{})
 
 var (
+	floatFeatureParser = func(feature *tf.TFFeatureJSON, data []byte) (tf_core.DataType, interface{}) {
+		if feature != nil {
+			values := make([]float32, len(data))
+			for i, b := range data {
+				values[i] = float32(b)
+			}
+			feature.FloatList = &values
+			return tf_core.DataType_DT_FLOAT,nil
+		}
+		values := make([]interface{}, len(data))
+		for i, b := range data {
+			values[i] = float32(b)
+		}
+		return tf_core.DataType_DT_FLOAT, values
+	}
+	intFeatureParser = func(feature *tf.TFFeatureJSON, data []byte) (tf_core.DataType, interface{}) {
+		if feature != nil {
+			values := make([]int64, len(data))
+			for i, b := range data {
+				values[i] = int64(b)
+			}
+			feature.IntList = &values
+			return tf_core.DataType_DT_INT64, nil
+		}
+		values := make([]interface{}, len(data))
+		for i, b := range data {
+			values[i] = int64(b)
+		}
+		return tf_core.DataType_DT_INT64, values
+	}
+	binaryParsers = map[string]binaryParser{
+		"float": floatFeatureParser,
+		"double": func(feature *tf.TFFeatureJSON, data []byte) (tf_core.DataType, interface{}) {
+			if feature != nil {
+				return floatFeatureParser(feature, data)
+			}
+			values := make([]interface{}, len(data))
+			for i, b := range data {
+				values[i] = float64(b)
+			}
+			return tf_core.DataType_DT_DOUBLE, values
+		},
+		"int": intFeatureParser,
+		"int8": func(feature *tf.TFFeatureJSON, data []byte) (tf_core.DataType, interface{}) {
+			if feature != nil {
+				return intFeatureParser(feature, data)
+			}
+			values := make([]interface{}, len(data))
+			for i, b := range data {
+				values[i] = int8(b)
+			}
+			return tf_core.DataType_DT_INT8, values
+		},
+		"int16": func(feature *tf.TFFeatureJSON, data []byte) (tf_core.DataType, interface{}) {
+			if feature != nil {
+				return intFeatureParser(feature, data)
+			}
+			values := make([]interface{}, len(data))
+			for i, b := range data {
+				values[i] = int16(b)
+			}
+			return tf_core.DataType_DT_INT16, values
+		},
+		"int32": func(feature *tf.TFFeatureJSON, data []byte) (tf_core.DataType, interface{}) {
+			if feature != nil {
+				return intFeatureParser(feature, data)
+			}
+			values := make([]interface{}, len(data))
+			for i, b := range data {
+				values[i] = int32(b)
+			}
+			return tf_core.DataType_DT_INT32, values
+		},
+		"int64": func(feature *tf.TFFeatureJSON, data []byte) (tf_core.DataType, interface{}) {
+			if feature != nil {
+				return intFeatureParser(feature, data)
+			}
+			values := make([]interface{}, len(data))
+			for i, b := range data {
+				values[i] = int64(b)
+			}
+			return tf_core.DataType_DT_INT64, values
+		},
+		"uint8": func(feature *tf.TFFeatureJSON, data []byte) (tf_core.DataType, interface{}) {
+			if feature != nil {
+				return intFeatureParser(feature, data)
+			}
+			values := make([]interface{}, len(data))
+			for i, b := range data {
+				values[i] = uint8(b)
+			}
+			return tf_core.DataType_DT_UINT8, values
+		},
+		"uint16": func(feature *tf.TFFeatureJSON, data []byte) (tf_core.DataType, interface{}) {
+			if feature != nil {
+				return intFeatureParser(feature, data)
+			}
+			values := make([]interface{}, len(data))
+			for i, b := range data {
+				values[i] = uint16(b)
+			}
+			return tf_core.DataType_DT_UINT16, values
+		},
+		"bytes": func(feature *tf.TFFeatureJSON, data []byte) (tf_core.DataType, interface{}) {
+			if feature != nil {
+				bytesData := [][]byte{data}
+				feature.BytesList = &bytesData
+			}
+			values := []interface{}{data}
+			return tf_core.DataType_DT_STRING, values
+		},
+		"strings": func(feature *tf.TFFeatureJSON, data []byte) (tf_core.DataType, interface{}) {
+			if feature != nil {
+				bytesData := [][]byte{data}
+				feature.BytesList = &bytesData
+			}
+			values := []interface{}{data}
+			return tf_core.DataType_DT_STRING, values
+		},
+		"byte": func(feature *tf.TFFeatureJSON, data []byte) (tf_core.DataType, interface{}) {
+			if feature != nil {
+				bytesData := [][]byte{data}
+				feature.BytesList = &bytesData
+			}
+			return tf_core.DataType_DT_STRING, data
+		},
+		"string": func(feature *tf.TFFeatureJSON, data []byte) (tf_core.DataType, interface{}) {
+			if feature != nil {
+				bytesData := [][]byte{data}
+				feature.BytesList = &bytesData
+			}
+			return tf_core.DataType_DT_STRING, data
+		},
+	}
 	parsers = map[string]propertyParser{
 		"float": func(feature *tf.TFFeatureJSON) (tf_core.DataType, func(val string) (interface{}, error)) {
-			values := []float32{}
-			feature.FloatList = &values
 			return tf_core.DataType_DT_FLOAT, func(val string) (interface{}, error) {
 				if f, err := strconv.ParseFloat(val, 32); err != nil {
 					return nil, err
 				} else {
 					if feature != nil {
+						values := []float32{}
+						feature.FloatList = &values
 						*feature.FloatList = append(*feature.FloatList, float32(f))
 					}
 					return float32(f), nil
@@ -43,13 +178,13 @@ var (
 			}
 		},
 		"double": func(feature *tf.TFFeatureJSON) (tf_core.DataType, func(val string) (interface{}, error)) {
-			values := []float32{}
-			feature.FloatList = &values
 			return tf_core.DataType_DT_DOUBLE, func(val string) (interface{}, error) {
 				if f, err := strconv.ParseFloat(val, 64); err != nil {
 					return nil, err
 				} else {
 					if feature != nil {
+						values := []float32{}
+						feature.FloatList = &values
 						*feature.FloatList = append(*feature.FloatList, float32(f))
 					}
 					return float64(f), nil
@@ -57,13 +192,13 @@ var (
 			}
 		},
 		"int": func(feature *tf.TFFeatureJSON) (tf_core.DataType, func(val string) (interface{}, error)) {
-			values := []int64{}
-			feature.IntList = &values
 			return tf_core.DataType_DT_INT64, func(val string) (interface{}, error) {
 				if f, err := strconv.ParseInt(val, 10, 64); err != nil {
 					return nil, err
 				} else {
 					if feature != nil {
+						values := []int64{}
+						feature.IntList = &values
 						*feature.IntList = append(*feature.IntList, int64(f))
 					}
 					return int64(f), nil
@@ -71,13 +206,13 @@ var (
 			}
 		},
 		"int8": func(feature *tf.TFFeatureJSON) (tf_core.DataType, func(val string) (interface{}, error)) {
-			values := []int64{}
-			feature.IntList = &values
 			return tf_core.DataType_DT_INT8, func(val string) (interface{}, error) {
 				if f, err := strconv.ParseInt(val, 10, 64); err != nil {
 					return nil, err
 				} else {
 					if feature != nil {
+						values := []int64{}
+						feature.IntList = &values
 						*feature.IntList = append(*feature.IntList, int64(f))
 					}
 					return int8(f), nil
@@ -85,13 +220,13 @@ var (
 			}
 		},
 		"int16": func(feature *tf.TFFeatureJSON) (tf_core.DataType, func(val string) (interface{}, error)) {
-			values := []int64{}
-			feature.IntList = &values
 			return tf_core.DataType_DT_INT16, func(val string) (interface{}, error) {
 				if f, err := strconv.ParseInt(val, 10, 64); err != nil {
 					return nil, err
 				} else {
 					if feature != nil {
+						values := []int64{}
+						feature.IntList = &values
 						*feature.IntList = append(*feature.IntList, int64(f))
 					}
 					return int16(f), nil
@@ -99,13 +234,13 @@ var (
 			}
 		},
 		"int32": func(feature *tf.TFFeatureJSON) (tf_core.DataType, func(val string) (interface{}, error)) {
-			values := []int64{}
-			feature.IntList = &values
 			return tf_core.DataType_DT_INT32, func(val string) (interface{}, error) {
 				if f, err := strconv.ParseInt(val, 10, 64); err != nil {
 					return nil, err
 				} else {
 					if feature != nil {
+						values := []int64{}
+						feature.IntList = &values
 						*feature.IntList = append(*feature.IntList, int64(f))
 					}
 					return int32(f), nil
@@ -113,24 +248,52 @@ var (
 			}
 		},
 		"int64": func(feature *tf.TFFeatureJSON) (tf_core.DataType, func(val string) (interface{}, error)) {
-			values := []int64{}
-			feature.IntList = &values
 			return tf_core.DataType_DT_INT64, func(val string) (interface{}, error) {
 				if f, err := strconv.ParseInt(val, 10, 64); err != nil {
 					return nil, err
 				} else {
 					if feature != nil {
+						values := []int64{}
+						feature.IntList = &values
 						*feature.IntList = append(*feature.IntList, int64(f))
 					}
 					return int64(f), nil
 				}
 			}
 		},
+		"uint8": func(feature *tf.TFFeatureJSON) (tf_core.DataType, func(val string) (interface{}, error)) {
+			return tf_core.DataType_DT_UINT8, func(val string) (interface{}, error) {
+				if f, err := strconv.ParseInt(val, 10, 64); err != nil {
+					return nil, err
+				} else {
+					if feature != nil {
+						values := []int64{}
+						feature.IntList = &values
+						*feature.IntList = append(*feature.IntList, int64(f))
+					}
+					return uint8(f), nil
+				}
+			}
+		},
+		"uint16": func(feature *tf.TFFeatureJSON) (tf_core.DataType, func(val string) (interface{}, error)) {
+			return tf_core.DataType_DT_UINT8, func(val string) (interface{}, error) {
+				if f, err := strconv.ParseInt(val, 10, 64); err != nil {
+					return nil, err
+				} else {
+					if feature != nil {
+						values := []int64{}
+						feature.IntList = &values
+						*feature.IntList = append(*feature.IntList, int64(f))
+					}
+					return uint16(f), nil
+				}
+			}
+		},
 		"string": func(feature *tf.TFFeatureJSON) (tf_core.DataType, func(val string) (interface{}, error)) {
-			values := [][]byte{}
-			feature.BytesList = &values
 			return tf_core.DataType_DT_STRING, func(val string) (interface{}, error) {
 				if feature != nil {
+					values := [][]byte{}
+					feature.BytesList = &values
 					*feature.BytesList = append(*feature.BytesList, []byte(val))
 				}
 				return []byte(val), nil
@@ -209,7 +372,7 @@ func (proxy TFHttpProxy) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 			for k, fHeader := range req.MultipartForm.File {
 				p := strings.Split(k, "_")
 				if len(p) > 0 && len(fHeader) > 0 {
-					if p[0] == "byte" {
+					if parser, ok := binaryParsers[p[0]]; ok {
 						feature := tf.TFFeatureJSON{}
 						file, err := fHeader[0].Open()
 						if err != nil {
@@ -224,9 +387,12 @@ func (proxy TFHttpProxy) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 							status = http.StatusBadRequest
 							return
 						}
-						bytes := [][]byte{data}
-						feature.BytesList = &bytes
+						parser(&feature, data)
 						model.TFFeatures[0][strings.Join(p[1:], "_")] = feature
+					} else {
+						returnError = fmt.Errorf("Unsupotred binary hanldler for %s", p[0])
+						status = http.StatusBadRequest
+						return
 					}
 				}
 			}
@@ -261,7 +427,7 @@ func (proxy TFHttpProxy) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 			for k, fHeader := range req.MultipartForm.File {
 				p := strings.Split(k, "_")
 				if len(p) > 0 && len(fHeader) > 0 {
-					if p[0] == "byte" {
+					if parser, ok := binaryParsers[p[0]]; ok {
 						file, err := fHeader[0].Open()
 						if err != nil {
 							returnError = err
@@ -269,16 +435,21 @@ func (proxy TFHttpProxy) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 							return
 						}
 						defer file.Close()
-						data, err := ioutil.ReadAll(file)
+						fileData, err := ioutil.ReadAll(file)
 						if err != nil {
 							returnError = err
 							status = http.StatusBadRequest
 							return
 						}
+						dtype, data := parser(nil, fileData)
 						model.Inputs[strings.Join(p[1:], "_")] = tf.TFInputJSON{
-							Dtype: tf_core.DataType_DT_STRING,
+							Dtype: dtype,
 							Data:  data,
 						}
+					} else {
+						returnError = fmt.Errorf("Unsupotred binary hanldler for %s", p[0])
+						status = http.StatusBadRequest
+						return
 					}
 				}
 			}
