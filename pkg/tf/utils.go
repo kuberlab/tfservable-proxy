@@ -10,6 +10,7 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/encoding"
 	"errors"
+	"encoding/base64"
 )
 
 type TFFeatureJSON struct {
@@ -320,7 +321,15 @@ func addFloat64(mtype tf.DataType, proto *tf.TensorProto, v float64) error {
 func addString(mtype tf.DataType, proto *tf.TensorProto, v string) error {
 	switch mtype {
 	case tf.DataType_DT_STRING:
-		proto.StringVal = append(proto.StringVal, []byte(v))
+		proto.TensorShape.Dim = append(proto.TensorShape.Dim, &tf.TensorShapeProto_Dim{
+			Size: 1,
+		})
+		bts, err := base64.StdEncoding.DecodeString(v)
+		if err != nil {
+			proto.StringVal = append(proto.StringVal, []byte(v))
+		} else {
+			proto.StringVal = append(proto.StringVal, bts)
+		}
 	default:
 		return fmt.Errorf("can't convert string to tf:%v", mtype)
 	}
