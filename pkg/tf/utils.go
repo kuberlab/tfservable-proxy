@@ -11,6 +11,7 @@ import (
 	"google.golang.org/grpc/encoding"
 	"errors"
 	"encoding/base64"
+	"math"
 )
 
 type TFFeatureJSON struct {
@@ -187,12 +188,22 @@ func tensor2Go(t *tf.TensorProto) interface{} {
 		res := make([]interface{}, len(t.FloatVal))
 		for i := range res {
 			res[i] = t.FloatVal[i]
+			if math.IsInf(float64(t.FloatVal[i]), -1) {
+				res[i] = float32(-math.MaxFloat32)
+			} else if math.IsInf(float64(t.FloatVal[i]), 1) {
+				res[i] = float32(math.MaxFloat32)
+			}
 		}
 		return shapeContainer(t.TensorShape.Dim, res)
 	case tf.DataType_DT_DOUBLE:
 		res := make([]interface{}, len(t.DoubleVal))
 		for i := range res {
 			res[i] = t.DoubleVal[i]
+			if math.IsInf(t.DoubleVal[i], -1) {
+				res[i] = float64(-math.MaxFloat64)
+			} else if math.IsInf(t.DoubleVal[i], 1) {
+				res[i] = float64(math.MaxFloat64)
+			}
 		}
 		return shapeContainer(t.TensorShape.Dim, res)
 	case tf.DataType_DT_STRING:
