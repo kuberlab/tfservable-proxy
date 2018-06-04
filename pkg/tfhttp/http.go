@@ -314,7 +314,7 @@ func (proxy TFHttpProxy) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 		}
 	}()
 	addr := req.Header.Get("Proxy-Addr")
-	sport := req.Header.Get("Proxy-Addr")
+	sport := req.Header.Get("Proxy-Port")
 	port := 9000
 	if sport != "" {
 		if v, err := strconv.Atoi(sport); err == nil {
