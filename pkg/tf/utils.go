@@ -257,7 +257,7 @@ func fillBaseTensor(data interface{}, proto *tf.TensorProto) error {
 		return addString(proto.Dtype, proto, v)
 	}
 
-	return errors.New("Usuppotted type")
+	return errors.New("Unsupported type")
 }
 func fillTensor(data interface{}, proto *tf.TensorProto, index int) error {
 	switch v := data.(type) {
@@ -332,9 +332,9 @@ func addFloat64(mtype tf.DataType, proto *tf.TensorProto, v float64) error {
 func addString(mtype tf.DataType, proto *tf.TensorProto, v string) error {
 	switch mtype {
 	case tf.DataType_DT_STRING:
-		proto.TensorShape.Dim = append(proto.TensorShape.Dim, &tf.TensorShapeProto_Dim{
-			Size: 1,
-		})
+		//proto.TensorShape.Dim = append(proto.TensorShape.Dim, &tf.TensorShapeProto_Dim{
+		//	Size: 1,
+		//})
 		bts, err := base64.StdEncoding.DecodeString(v)
 		if err != nil {
 			proto.StringVal = append(proto.StringVal, []byte(v))
