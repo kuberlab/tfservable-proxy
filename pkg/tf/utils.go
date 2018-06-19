@@ -15,17 +15,17 @@ import (
 )
 
 type TFFeatureJSON struct {
-	Float     *float32   `json:"float",omitempty`
-	FloatList *[]float32 `json:"float_list",omitempty`
-	Int       *int64     `json:"int",omitempty`
-	IntList   *[]int64   `json:"int_list",omitempty`
-	Bytes     *[]byte    `json:"bytes",omitempty`
-	BytesList *[][]byte  `json:"bytes_list",omitempty`
+	Float     *float32   `json:"float,omitempty"`
+	FloatList *[]float32 `json:"float_list,omitempty"`
+	Int       *int64     `json:"int,omitempty"`
+	IntList   *[]int64   `json:"int_list,omitempty"`
+	Bytes     *[]byte    `json:"bytes,omitempty"`
+	BytesList *[][]byte  `json:"bytes_list,omitempty"`
 }
 
 type TFInputJSON struct {
-	Dtype tf.DataType  `json:"dtype",omitempty`
-	Data  interface{} `json:"data",omitempty`
+	Dtype tf.DataType  `json:"dtype,omitempty"`
+	Data  interface{} `json:"data,omitempty"`
 }
 
 func (t *TFInputJSON) Tensor() (*tf.TensorProto, error) {
@@ -41,10 +41,10 @@ func (t *TFInputJSON) Tensor() (*tf.TensorProto, error) {
 }
 
 type ModelData struct {
-	TFFeatures  []map[string]TFFeatureJSON `json:"features",omitempty`
-	Inputs      map[string]TFInputJSON     `json:"inputs",omitempty`
-	OutFilter   []string                   `json:"out_filter",omitempty`
-	OutMimeType string                     `json:"out_mime_type",omitempty`
+	TFFeatures  []map[string]TFFeatureJSON `json:"features,omitempty"`
+	Inputs      map[string]TFInputJSON     `json:"inputs,omitempty"`
+	OutFilter   []string                   `json:"out_filter,omitempty"`
+	OutMimeType string                     `json:"out_mime_type,omitempty"`
 }
 
 func (f *TFFeatureJSON) TFFeature() *example.Feature {
