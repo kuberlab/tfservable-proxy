@@ -5,14 +5,16 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	tf_core "github.com/dreyk/tensorflow-serving-go/pkg/tensorflow/core/framework"
-	"github.com/kuberlab/tfservable-proxy/pkg/tf"
 	"io/ioutil"
 	"log"
 	"net/http"
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/Sirupsen/logrus"
+	tf_core "github.com/dreyk/tensorflow-serving-go/pkg/tensorflow/core/framework"
+	"github.com/kuberlab/tfservable-proxy/pkg/tf"
 )
 
 const (
@@ -35,7 +37,7 @@ var (
 				values[i] = float32(b)
 			}
 			feature.FloatList = &values
-			return tf_core.DataType_DT_FLOAT,nil
+			return tf_core.DataType_DT_FLOAT, nil
 		}
 		values := make([]interface{}, len(data))
 		for i, b := range data {
@@ -311,6 +313,7 @@ func (proxy TFHttpProxy) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 		if returnError != nil {
 			w.WriteHeader(status)
 			w.Write([]byte(returnError.Error()))
+			logrus.Error(returnError.Error())
 		}
 	}()
 	addr := req.Header.Get("Proxy-Addr")

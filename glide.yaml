@@ -1,5 +1,6 @@
 package: github.com/kuberlab/tfservable-proxy
 import:
+- package: github.com/Sirupsen/logrus
 - package: github.com/dreyk/tensorflow-serving-go
   subpackages:
   - pkg/tensorflow/core/example
