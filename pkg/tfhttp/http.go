@@ -510,6 +510,34 @@ func (proxy TFHttpProxy) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 			status = http.StatusBadRequest
 			return
 		}
+	} else if model.OutMimeType == "text/plain" && len(model.OutFilter) == 1 {
+		if v, ok := result[model.OutFilter[0]]; ok {
+			switch b := v.(type) {
+			case []interface{}:
+				texts := []string{}
+				for _, v := range b {
+					switch t := v.(type) {
+					case []byte:
+						texts = append(texts, string(t))
+					default:
+						returnError = errors.New("Output must be array of bytes")
+						status = http.StatusBadRequest
+						return
+					}
+				}
+				encoder := json.NewEncoder(w)
+				encoder.Encode(texts)
+				return
+			default:
+				returnError = errors.New("Bad out type")
+				status = http.StatusBadRequest
+				return
+			}
+		} else {
+			returnError = errors.New("Ouput field not found")
+			status = http.StatusBadRequest
+			return
+		}
 	} else {
 		encoder := json.NewEncoder(w)
 		err = encoder.Encode(result)
