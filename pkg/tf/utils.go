@@ -1,10 +1,13 @@
 package tf
 
 import (
+	"bytes"
 	"context"
 	"encoding/base64"
+	"encoding/binary"
 	"errors"
 	"fmt"
+	"github.com/Sirupsen/logrus"
 	"github.com/dreyk/tensorflow-serving-go/pkg/tensorflow/core/example"
 	tf "github.com/dreyk/tensorflow-serving-go/pkg/tensorflow/core/framework"
 	"github.com/dreyk/tensorflow-serving-go/pkg/tensorflow_serving/apis"
@@ -12,6 +15,7 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/encoding"
 	"math"
+	"reflect"
 )
 
 type TFFeatureJSON struct {
@@ -179,10 +183,18 @@ func CallTF(ctx context.Context, servingAddr string, model string, version int64
 func tensor2Go(t *tf.TensorProto) interface{} {
 	switch t.Dtype {
 	case tf.DataType_DT_INT64:
-		res := make([]interface{}, len(t.Int64Val))
-		for i := range res {
-			res[i] = t.Int64Val[i]
+		var arr interface{} = t.Int64Val
+		if t.Int64Val == nil {
+			arr = t.TensorContent
 		}
+		res := makeRes(arr, reflect.TypeOf(int64(1)))
+		return shapeContainer(t.TensorShape.Dim, res)
+	case tf.DataType_DT_INT32:
+		var arr interface{} = t.IntVal
+		if t.IntVal == nil {
+			arr = t.TensorContent
+		}
+		res := makeRes(arr, reflect.TypeOf(int32(1)))
 		return shapeContainer(t.TensorShape.Dim, res)
 	case tf.DataType_DT_FLOAT:
 		res := make([]interface{}, len(t.FloatVal))
@@ -215,6 +227,46 @@ func tensor2Go(t *tf.TensorProto) interface{} {
 
 	}
 	return nil
+}
+
+func makeRes(arr interface{}, type_ reflect.Type) []interface{} {
+	res := make([]interface{}, 0)
+
+	// First, convert byte array to numeric array if it takes place.
+	switch v := arr.(type) {
+	case []byte:
+		targetValue := reflect.MakeSlice(reflect.SliceOf(type_), len(v)/int(type_.Size()), len(v)/int(type_.Size()))
+		targetArr := targetValue.Interface()
+		buf := bytes.NewBuffer(v)
+		err := binary.Read(buf, binary.LittleEndian, targetArr)
+		if err != nil {
+			logrus.Warnf("Error decoding bytes to array: %v", err)
+		}
+		arr = targetArr
+	}
+
+	switch v := arr.(type) {
+	case []int32:
+		for _, el := range v {
+			res = append(res, el)
+		}
+	case []int64:
+		for _, el := range v {
+			res = append(res, el)
+		}
+	case []float32:
+		for _, el := range v {
+			res = append(res, el)
+		}
+	case []float64:
+		for _, el := range v {
+			res = append(res, el)
+		}
+	case []byte:
+
+	}
+
+	return res
 }
 
 func shapeContainer(dim []*tf.TensorShapeProto_Dim, data []interface{}) interface{} {
