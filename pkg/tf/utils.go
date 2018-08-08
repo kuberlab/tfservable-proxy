@@ -2,6 +2,8 @@ package tf
 
 import (
 	"context"
+	"encoding/base64"
+	"errors"
 	"fmt"
 	"github.com/dreyk/tensorflow-serving-go/pkg/tensorflow/core/example"
 	tf "github.com/dreyk/tensorflow-serving-go/pkg/tensorflow/core/framework"
@@ -9,8 +11,6 @@ import (
 	google_protobuf "github.com/golang/protobuf/ptypes/wrappers"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/encoding"
-	"errors"
-	"encoding/base64"
 	"math"
 )
 
@@ -24,7 +24,7 @@ type TFFeatureJSON struct {
 }
 
 type TFInputJSON struct {
-	Dtype tf.DataType  `json:"dtype,omitempty"`
+	Dtype tf.DataType `json:"dtype,omitempty"`
 	Data  interface{} `json:"data,omitempty"`
 }
 
@@ -272,13 +272,13 @@ func fillTensor(data interface{}, proto *tf.TensorProto, index int) error {
 			case []interface{}:
 				fillTensor(v2, proto, i)
 			default:
-				if err:=fillBaseTensor(v2,proto);err!=nil{
+				if err := fillBaseTensor(v2, proto); err != nil {
 					return err
 				}
 			}
 		}
 	default:
-		return fillBaseTensor(v,proto)
+		return fillBaseTensor(v, proto)
 	}
 	return nil
 }

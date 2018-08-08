@@ -421,7 +421,7 @@ func (proxy TFHttpProxy) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 						}
 						model.Inputs[strings.Join(p[1:], "_")] = tf.TFInputJSON{
 							Dtype: dtype,
-							Data:  &values,
+							Data:  values,
 						}
 					}
 				}
