@@ -197,23 +197,30 @@ func tensor2Go(t *tf.TensorProto) interface{} {
 		res := makeRes(arr, reflect.TypeOf(int32(1)))
 		return shapeContainer(t.TensorShape.Dim, res)
 	case tf.DataType_DT_FLOAT:
-		res := make([]interface{}, len(t.FloatVal))
+		var arr interface{} = t.FloatVal
+		if t.FloatVal == nil {
+			arr = t.TensorContent
+		}
+		res := makeRes(arr, reflect.TypeOf(float32(1)))
 		for i := range res {
-			res[i] = t.FloatVal[i]
-			if math.IsInf(float64(t.FloatVal[i]), -1) {
+			if math.IsInf(float64(mustFloat32(res[i])), -1) {
 				res[i] = float32(-math.MaxFloat32)
-			} else if math.IsInf(float64(t.FloatVal[i]), 1) {
+			} else if math.IsInf(float64(mustFloat32(res[i])), 1) {
 				res[i] = float32(math.MaxFloat32)
 			}
 		}
 		return shapeContainer(t.TensorShape.Dim, res)
 	case tf.DataType_DT_DOUBLE:
-		res := make([]interface{}, len(t.DoubleVal))
+		var arr interface{} = t.DoubleVal
+		if t.DoubleVal == nil {
+			arr = t.TensorContent
+		}
+		res := makeRes(arr, reflect.TypeOf(float64(1)))
 		for i := range res {
 			res[i] = t.DoubleVal[i]
-			if math.IsInf(t.DoubleVal[i], -1) {
+			if math.IsInf(mustFloat64(res[i]), -1) {
 				res[i] = float64(-math.MaxFloat64)
-			} else if math.IsInf(t.DoubleVal[i], 1) {
+			} else if math.IsInf(mustFloat64(res[i]), 1) {
 				res[i] = float64(math.MaxFloat64)
 			}
 		}
@@ -358,6 +365,7 @@ func addInt64(mtype tf.DataType, proto *tf.TensorProto, v int64) error {
 	}
 	return nil
 }
+
 func addFloat64(mtype tf.DataType, proto *tf.TensorProto, v float64) error {
 	switch mtype {
 	case tf.DataType_DT_DOUBLE:
@@ -381,6 +389,7 @@ func addFloat64(mtype tf.DataType, proto *tf.TensorProto, v float64) error {
 	}
 	return nil
 }
+
 func addString(mtype tf.DataType, proto *tf.TensorProto, v string) error {
 	switch mtype {
 	case tf.DataType_DT_STRING:
@@ -398,6 +407,7 @@ func addString(mtype tf.DataType, proto *tf.TensorProto, v string) error {
 	}
 	return nil
 }
+
 func addBytes(mtype tf.DataType, proto *tf.TensorProto, v []byte) error {
 	switch mtype {
 	case tf.DataType_DT_STRING:
@@ -406,4 +416,22 @@ func addBytes(mtype tf.DataType, proto *tf.TensorProto, v []byte) error {
 		return fmt.Errorf("can't convert string to tf:%v", mtype)
 	}
 	return nil
+}
+
+func mustFloat32(i interface{}) float32 {
+	f, ok := i.(float32)
+	if ok {
+		return f
+	} else {
+		return 0
+	}
+}
+
+func mustFloat64(i interface{}) float64 {
+	f, ok := i.(float64)
+	if ok {
+		return f
+	} else {
+		return 0
+	}
 }
