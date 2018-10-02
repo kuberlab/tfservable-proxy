@@ -7,6 +7,9 @@ import (
 	"encoding/binary"
 	"errors"
 	"fmt"
+	"math"
+	"reflect"
+
 	"github.com/Sirupsen/logrus"
 	"github.com/dreyk/tensorflow-serving-go/pkg/tensorflow/core/example"
 	tf "github.com/dreyk/tensorflow-serving-go/pkg/tensorflow/core/framework"
@@ -14,8 +17,6 @@ import (
 	google_protobuf "github.com/golang/protobuf/ptypes/wrappers"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/encoding"
-	"math"
-	"reflect"
 )
 
 type TFFeatureJSON struct {

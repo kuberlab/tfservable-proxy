@@ -22,8 +22,10 @@ const (
 )
 
 type TFHttpProxy struct {
-	Timeout   time.Duration
-	URIPrefix string
+	Timeout        time.Duration
+	URIPrefix      string
+	DefaultAddress string
+	DefaultPort    int
 }
 
 type propertyParser func(feature *tf.TFFeatureJSON) (tf_core.DataType, func(val string) (interface{}, error))
@@ -318,10 +320,19 @@ func (proxy TFHttpProxy) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	}()
 	addr := req.Header.Get("Proxy-Addr")
 	sport := req.Header.Get("Proxy-Port")
-	port := 9000
+	port := proxy.DefaultPort
 	if sport != "" {
 		if v, err := strconv.Atoi(sport); err == nil {
 			port = v
+		}
+	}
+	if addr == "" {
+		if proxy.DefaultAddress != "" {
+			addr = proxy.DefaultAddress
+		} else {
+			returnError = errors.New("Provide target address using header 'Proxy-Addr'")
+			status = http.StatusBadRequest
+			return
 		}
 	}
 	addr = fmt.Sprintf("%s:%d", addr, port)
