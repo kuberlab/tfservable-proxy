@@ -314,7 +314,11 @@ func (proxy TFHttpProxy) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 		log.Printf("%s->%d(%.2f)\n", req.RequestURI, status, time.Since(start).Seconds())
 		if returnError != nil {
 			w.WriteHeader(status)
-			w.Write([]byte(returnError.Error()))
+			errStr := returnError.Error()
+			if !strings.HasSuffix(errStr, "\n") {
+				errStr += "\n"
+			}
+			w.Write([]byte(errStr))
 			logrus.Error(returnError.Error())
 		}
 	}()
@@ -336,18 +340,21 @@ func (proxy TFHttpProxy) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 		}
 	}
 	addr = fmt.Sprintf("%s:%d", addr, port)
+
+	modelName, modelVersion, modelSinature, err := parseRequestURI(proxy.URIPrefix, req.RequestURI)
+	if err != nil {
+		returnError = err
+		status = http.StatusNotFound
+		return
+	}
+
 	if req.Method != "POST" {
 		returnError = errors.New("Only POST request is supported")
 		status = http.StatusMethodNotAllowed
 		return
 	}
+
 	defer req.Body.Close()
-	modelName, modelVersion, modelSinature, err := parseRequestURI(proxy.URIPrefix, req.RequestURI)
-	if err != nil {
-		returnError = err
-		status = http.StatusBadRequest
-		return
-	}
 	model := tf.ModelData{}
 	if strings.Contains(req.Header.Get("content-type"), "multipart/form-data") {
 		err = req.ParseMultipartForm(defaultMaxMemory)
@@ -564,12 +571,12 @@ func (proxy TFHttpProxy) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 func parseRequestURI(prefix, uri string) (model string, version int64, signature string, err error) {
 	version = -1
 	if i := strings.Index(uri, prefix); i < 0 {
-		err = errors.New("Bad request path")
+		err = fmt.Errorf("Wrong request path, need prefix /%v", prefix)
 	} else {
 		uri = strings.TrimPrefix(uri[i+len(prefix):], "/")
 		p := strings.Split(uri, "/")
 		if len(p) < 1 {
-			err = errors.New("Bad request path")
+			err = fmt.Errorf("Wrong request path, need prefix /%v", prefix)
 		}
 		model = p[0]
 		if len(p) > 1 {

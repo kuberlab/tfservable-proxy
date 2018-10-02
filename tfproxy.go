@@ -34,7 +34,6 @@ func main() {
 	log.Printf("Default target port: %v", proxy.DefaultPort)
 	log.Printf("Proxy will be available on: http://0.0.0.0:%v/%v", port, proxy.URIPrefix)
 
-	http.Handle("/", proxy)
 	log.Printf("Listen on :%d\n", port)
-	log.Fatal(http.ListenAndServe(fmt.Sprintf(":%d", port), nil))
+	log.Fatal(http.ListenAndServe(fmt.Sprintf(":%d", port), proxy))
 }
