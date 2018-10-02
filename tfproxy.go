@@ -8,6 +8,8 @@ import (
 	"time"
 
 	"github.com/kuberlab/tfservable-proxy/pkg/tfhttp"
+	"os"
+	"os/signal"
 )
 
 var (
@@ -35,5 +37,15 @@ func main() {
 	log.Printf("Proxy will be available on: http://0.0.0.0:%v/%v", port, proxy.URIPrefix)
 
 	log.Printf("Listen on :%d\n", port)
+
+	c := make(chan os.Signal, 1)
+	signal.Notify(c, os.Interrupt)
+	go func() {
+		for range c {
+			log.Printf("Shutdown proxy...")
+			os.Exit(0)
+		}
+	}()
+
 	log.Fatal(http.ListenAndServe(fmt.Sprintf(":%d", port), proxy))
 }
