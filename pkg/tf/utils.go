@@ -218,7 +218,6 @@ func tensor2Go(t *tf.TensorProto) interface{} {
 		}
 		res := makeRes(arr, reflect.TypeOf(float64(1)))
 		for i := range res {
-			res[i] = t.DoubleVal[i]
 			if math.IsInf(mustFloat64(res[i]), -1) {
 				res[i] = float64(-math.MaxFloat64)
 			} else if math.IsInf(mustFloat64(res[i]), 1) {
