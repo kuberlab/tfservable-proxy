@@ -20,7 +20,7 @@ import (
 )
 
 const (
-	MaxMsgLength = 1024 * 64 // 64 MB
+	MaxMsgLength = 1024 * 1024 * 64 // 64 MB
 )
 
 type TFFeatureJSON struct {
