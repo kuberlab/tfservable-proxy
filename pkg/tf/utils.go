@@ -19,6 +19,10 @@ import (
 	"google.golang.org/grpc/encoding"
 )
 
+const (
+	MaxMsgLength = 1024 * 64 // 64 MB
+)
+
 type TFFeatureJSON struct {
 	Float     *float32   `json:"float,omitempty"`
 	FloatList *[]float32 `json:"float_list,omitempty"`
@@ -164,7 +168,11 @@ func CallTF(ctx context.Context, servingAddr string, model string, version int64
 		ModelSpec: mSpec,
 		Inputs:    feedData,
 	}
-	conn, err := grpc.Dial(servingAddr, grpc.WithInsecure())
+	conn, err := grpc.Dial(
+		servingAddr,
+		grpc.WithInsecure(),
+		grpc.WithDefaultCallOptions(grpc.MaxCallRecvMsgSize(MaxMsgLength)),
+	)
 	if err != nil {
 		return nil, fmt.Errorf("Failed open grpc connection %v", err)
 	}
