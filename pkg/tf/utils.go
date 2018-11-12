@@ -42,6 +42,7 @@ func (t *TFInputJSON) Tensor() (*tf.TensorProto, error) {
 		Dtype:       t.Dtype,
 		TensorShape: &tf.TensorShapeProto{},
 	}
+
 	err := fillTensor(t.Data, proto, 0)
 	if err != nil {
 		return nil, err
@@ -326,18 +327,19 @@ func fillBaseTensor(data interface{}, proto *tf.TensorProto) error {
 
 	return errors.New("Unsupported type")
 }
-func fillTensor(data interface{}, proto *tf.TensorProto, index int) error {
+
+func fillTensor(data interface{}, proto *tf.TensorProto, nesting int) error {
 	switch v := data.(type) {
 	case []interface{}:
-		if index == 0 {
+		if len(proto.TensorShape.Dim) <= nesting {
 			proto.TensorShape.Dim = append(proto.TensorShape.Dim, &tf.TensorShapeProto_Dim{
 				Size: int64(len(v)),
 			})
 		}
-		for i, v1 := range v {
+		for _, v1 := range v {
 			switch v2 := v1.(type) {
 			case []interface{}:
-				fillTensor(v2, proto, i)
+				fillTensor(v2, proto, nesting + 1)
 			default:
 				if err := fillBaseTensor(v2, proto); err != nil {
 					return err
