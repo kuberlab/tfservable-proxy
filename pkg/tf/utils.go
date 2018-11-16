@@ -305,6 +305,8 @@ func fillBaseTensor(data interface{}, proto *tf.TensorProto) error {
 	switch v := data.(type) {
 	case float64:
 		return addFloat64(proto.Dtype, proto, v)
+	case float32:
+		return addFloat32(proto.Dtype, proto, v)
 	case int64:
 		return addInt64(proto.Dtype, proto, v)
 	case int8:
@@ -339,7 +341,7 @@ func fillTensor(data interface{}, proto *tf.TensorProto, nesting int) error {
 		for _, v1 := range v {
 			switch v2 := v1.(type) {
 			case []interface{}:
-				fillTensor(v2, proto, nesting + 1)
+				fillTensor(v2, proto, nesting+1)
 			default:
 				if err := fillBaseTensor(v2, proto); err != nil {
 					return err
@@ -396,6 +398,30 @@ func addFloat64(mtype tf.DataType, proto *tf.TensorProto, v float64) error {
 		proto.IntVal = append(proto.IntVal, int32(v))
 	default:
 		return fmt.Errorf("can't convert float64 to tf:%v", mtype)
+	}
+	return nil
+}
+
+func addFloat32(mtype tf.DataType, proto *tf.TensorProto, v float32) error {
+	switch mtype {
+	case tf.DataType_DT_DOUBLE:
+		proto.DoubleVal = append(proto.DoubleVal, float64(v))
+	case tf.DataType_DT_FLOAT:
+		proto.FloatVal = append(proto.FloatVal, float32(v))
+	case tf.DataType_DT_INT8:
+		proto.IntVal = append(proto.IntVal, int32(v))
+	case tf.DataType_DT_INT16:
+		proto.IntVal = append(proto.IntVal, int32(v))
+	case tf.DataType_DT_INT32:
+		proto.IntVal = append(proto.IntVal, int32(v))
+	case tf.DataType_DT_INT64:
+		proto.Int64Val = append(proto.Int64Val, int64(v))
+	case tf.DataType_DT_UINT8:
+		proto.IntVal = append(proto.IntVal, int32(v))
+	case tf.DataType_DT_UINT16:
+		proto.IntVal = append(proto.IntVal, int32(v))
+	default:
+		return fmt.Errorf("can't convert float32 to tf:%v", mtype)
 	}
 	return nil
 }
