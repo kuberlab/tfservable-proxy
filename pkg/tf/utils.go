@@ -174,10 +174,14 @@ func CallTF(ctx context.Context, servingAddr string, model string, version int64
 		grpc.WithInsecure(),
 		grpc.WithDefaultCallOptions(grpc.MaxCallRecvMsgSize(MaxMsgLength)),
 	)
+	defer func(){
+		if conn != nil {
+			conn.Close()
+		}
+	}()
 	if err != nil {
 		return nil, fmt.Errorf("Failed open grpc connection %v", err)
 	}
-	defer conn.Close()
 	client := apis.NewPredictionServiceClient(conn)
 	resp, err := client.Predict(ctx, req)
 	if err != nil {

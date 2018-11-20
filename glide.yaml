@@ -6,9 +6,15 @@ import:
   - pkg/tensorflow/core/example
   - pkg/tensorflow/core/framework
   - pkg/tensorflow_serving/apis
+- package: golang.org/x/sys
+  version: ec83556a53fe16b65c452a104ea9d1e86a671852
+  subpackages:
+  - unix
 - package: github.com/golang/protobuf
+  version: 52132540909e117f2b98b0694383dc0ab1e1deca
   subpackages:
   - ptypes/wrappers
 - package: google.golang.org/grpc
+  version: ef2b8e2f53fcd6654d12966394462f84e0f04066
   subpackages:
   - encoding
