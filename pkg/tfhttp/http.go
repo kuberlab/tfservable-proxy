@@ -306,6 +306,22 @@ var (
 	}
 )
 
+func binaryParsersList() []string {
+	res := make([]string, 0)
+	for k := range binaryParsers {
+		res = append(res, k)
+	}
+	return res
+}
+
+func parsersList() []string {
+	res := make([]string, 0)
+	for k := range parsers {
+		res = append(res, k)
+	}
+	return res
+}
+
 func (proxy TFHttpProxy) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	start := time.Now()
 	status := http.StatusOK
@@ -468,7 +484,11 @@ func (proxy TFHttpProxy) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 							Data:  data,
 						}
 					} else {
-						returnError = fmt.Errorf("Unsupotred binary hanldler for %s", p[0])
+						returnError = fmt.Errorf(
+							"Unsupported binary handler %v; currently supported: %v",
+							strings.Trim(p[0], "\n"),
+							binaryParsersList(),
+						)
 						status = http.StatusBadRequest
 						return
 					}
