@@ -133,7 +133,7 @@ func CallTF(ctx context.Context, servingAddr string, model string, version int64
 		if codec == nil {
 			return nil, fmt.Errorf("Codec for proto not found")
 		}
-		messages := [][]byte{}
+		messages := make([][]byte, 0)
 		for _, f := range modelData.TFFeatures {
 			tfFeatures := map[string]*example.Feature{}
 			for k, v := range f {
@@ -293,7 +293,7 @@ func shapeContainer(dim []*tf.TensorShapeProto_Dim, data []interface{}) interfac
 	if len(dim) < 2 {
 		return data
 	}
-	res := []interface{}{}
+	res := make([]interface{}, 0)
 	last := len(dim) - 1
 	l := int(dim[last].Size)
 	for i := 0; i < len(data); i += l {
