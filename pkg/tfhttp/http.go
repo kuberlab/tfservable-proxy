@@ -32,7 +32,7 @@ func (proxy Proxy) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	status := http.StatusOK
 	var returnError error
 	defer func() {
-		log.Printf("%s->%d(%.2f)\n", req.RequestURI, status, time.Since(start).Seconds())
+		log.Printf("%s -> %d(%.1fms)\n", req.RequestURI, status, time.Since(start).Seconds()*1000)
 		if returnError != nil {
 			w.WriteHeader(status)
 			errStr := returnError.Error()

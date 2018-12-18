@@ -152,7 +152,7 @@ var (
 					return nil, err
 				} else {
 					if feature != nil {
-						values := []float32{}
+						values := make([]float32, 0)
 						feature.FloatList = &values
 						*feature.FloatList = append(*feature.FloatList, float32(f))
 					}
@@ -166,7 +166,7 @@ var (
 					return nil, err
 				} else {
 					if feature != nil {
-						values := []float32{}
+						values := make([]float32, 0)
 						feature.FloatList = &values
 						*feature.FloatList = append(*feature.FloatList, float32(f))
 					}
@@ -180,7 +180,7 @@ var (
 					return nil, err
 				} else {
 					if feature != nil {
-						values := []int64{}
+						values := make([]int64, 0)
 						feature.IntList = &values
 						*feature.IntList = append(*feature.IntList, int64(f))
 					}
@@ -194,7 +194,7 @@ var (
 					return nil, err
 				} else {
 					if feature != nil {
-						values := []int64{}
+						values := make([]int64, 0)
 						feature.IntList = &values
 						*feature.IntList = append(*feature.IntList, int64(f))
 					}
@@ -208,7 +208,7 @@ var (
 					return nil, err
 				} else {
 					if feature != nil {
-						values := []int64{}
+						values := make([]int64, 0)
 						feature.IntList = &values
 						*feature.IntList = append(*feature.IntList, int64(f))
 					}
@@ -222,7 +222,7 @@ var (
 					return nil, err
 				} else {
 					if feature != nil {
-						values := []int64{}
+						values := make([]int64, 0)
 						feature.IntList = &values
 						*feature.IntList = append(*feature.IntList, int64(f))
 					}
@@ -236,7 +236,7 @@ var (
 					return nil, err
 				} else {
 					if feature != nil {
-						values := []int64{}
+						values := make([]int64, 0)
 						feature.IntList = &values
 						*feature.IntList = append(*feature.IntList, int64(f))
 					}
@@ -250,7 +250,7 @@ var (
 					return nil, err
 				} else {
 					if feature != nil {
-						values := []int64{}
+						values := make([]int64, 0)
 						feature.IntList = &values
 						*feature.IntList = append(*feature.IntList, int64(f))
 					}
@@ -264,7 +264,7 @@ var (
 					return nil, err
 				} else {
 					if feature != nil {
-						values := []int64{}
+						values := make([]int64, 0)
 						feature.IntList = &values
 						*feature.IntList = append(*feature.IntList, int64(f))
 					}
@@ -275,11 +275,22 @@ var (
 		"string": func(feature *tf.FeatureJSON) (tfcore.DataType, func(val string) (interface{}, error)) {
 			return tfcore.DataType_DT_STRING, func(val string) (interface{}, error) {
 				if feature != nil {
-					values := [][]byte{}
+					values := make([][]byte, 0)
 					feature.BytesList = &values
 					*feature.BytesList = append(*feature.BytesList, []byte(val))
 				}
 				return []byte(val), nil
+			}
+		},
+		"bool": func(feature *tf.FeatureJSON) (tfcore.DataType, func(val string) (interface{}, error)) {
+			return tfcore.DataType_DT_BOOL, func(val string) (interface{}, error) {
+				b, _ := strconv.ParseBool(val)
+				if feature != nil {
+					values := make([]bool, 0)
+					feature.BoolList = &values
+					*feature.BoolList = append(*feature.BoolList, b)
+				}
+				return b, nil
 			}
 		},
 	}
@@ -300,4 +311,3 @@ func parsersList() []string {
 	}
 	return res
 }
-

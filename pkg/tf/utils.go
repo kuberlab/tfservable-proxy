@@ -5,7 +5,6 @@ import (
 	"context"
 	"encoding/base64"
 	"encoding/binary"
-	"errors"
 	"fmt"
 	"math"
 	"reflect"
@@ -14,7 +13,7 @@ import (
 	"github.com/dreyk/tensorflow-serving-go/pkg/tensorflow/core/example"
 	tf "github.com/dreyk/tensorflow-serving-go/pkg/tensorflow/core/framework"
 	"github.com/dreyk/tensorflow-serving-go/pkg/tensorflow_serving/apis"
-	google_protobuf "github.com/golang/protobuf/ptypes/wrappers"
+	googleproto "github.com/golang/protobuf/ptypes/wrappers"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/encoding"
 )
@@ -30,6 +29,7 @@ type FeatureJSON struct {
 	IntList   *[]int64   `json:"int_list,omitempty"`
 	Bytes     *[]byte    `json:"bytes,omitempty"`
 	BytesList *[][]byte  `json:"bytes_list,omitempty"`
+	BoolList  *[]bool    `json:"bool_list,omitempty"`
 }
 
 type InputJSON struct {
@@ -115,7 +115,7 @@ func CallTF(ctx context.Context, servingAddr string, model string, version int64
 		SignatureName: signature,
 	}
 	if version > 0 {
-		mSpec.Version = &google_protobuf.Int64Value{
+		mSpec.Version = &googleproto.Int64Value{
 			Value: version,
 		}
 	}
@@ -196,48 +196,75 @@ func CallTF(ctx context.Context, servingAddr string, model string, version int64
 
 func tensor2Go(t *tf.TensorProto) interface{} {
 	switch t.Dtype {
+	case tf.DataType_DT_BOOL:
+		var arr interface{} = t.BoolVal
+		if t.BoolVal == nil {
+			arr = t.TensorContent
+		}
+		res := makeRes(arr, reflect.TypeOf(true), t.TensorShape.Dim)
+		switch shaped := res.(type) {
+		case []interface{}:
+			return shapeContainer(t.TensorShape.Dim, shaped)
+		}
+		return res
 	case tf.DataType_DT_INT64:
 		var arr interface{} = t.Int64Val
 		if t.Int64Val == nil {
 			arr = t.TensorContent
 		}
-		res := makeRes(arr, reflect.TypeOf(int64(1)))
-		return shapeContainer(t.TensorShape.Dim, res)
+		res := makeRes(arr, reflect.TypeOf(int64(1)), t.TensorShape.Dim)
+		switch shaped := res.(type) {
+		case []interface{}:
+			return shapeContainer(t.TensorShape.Dim, shaped)
+		}
+		return res
 	case tf.DataType_DT_INT32:
 		var arr interface{} = t.IntVal
 		if t.IntVal == nil {
 			arr = t.TensorContent
 		}
-		res := makeRes(arr, reflect.TypeOf(int32(1)))
-		return shapeContainer(t.TensorShape.Dim, res)
+		res := makeRes(arr, reflect.TypeOf(int32(1)), t.TensorShape.Dim)
+		switch shaped := res.(type) {
+		case []interface{}:
+			return shapeContainer(t.TensorShape.Dim, shaped)
+		}
+		return res
 	case tf.DataType_DT_FLOAT:
 		var arr interface{} = t.FloatVal
 		if t.FloatVal == nil {
 			arr = t.TensorContent
 		}
-		res := makeRes(arr, reflect.TypeOf(float32(1)))
-		for i := range res {
-			if math.IsInf(float64(mustFloat32(res[i])), -1) {
-				res[i] = float32(-math.MaxFloat32)
-			} else if math.IsInf(float64(mustFloat32(res[i])), 1) {
-				res[i] = float32(math.MaxFloat32)
+		res := makeRes(arr, reflect.TypeOf(float32(1)), t.TensorShape.Dim)
+		switch shaped := res.(type) {
+		case []interface{}:
+			for i := range shaped {
+				if math.IsInf(float64(mustFloat32(shaped[i])), -1) {
+					shaped[i] = float32(-math.MaxFloat32)
+				} else if math.IsInf(float64(mustFloat32(shaped[i])), 1) {
+					shaped[i] = float32(math.MaxFloat32)
+				}
 			}
+			return shapeContainer(t.TensorShape.Dim, shaped)
 		}
-		return shapeContainer(t.TensorShape.Dim, res)
+		return res
 	case tf.DataType_DT_DOUBLE:
 		var arr interface{} = t.DoubleVal
 		if t.DoubleVal == nil {
 			arr = t.TensorContent
 		}
-		res := makeRes(arr, reflect.TypeOf(float64(1)))
-		for i := range res {
-			if math.IsInf(mustFloat64(res[i]), -1) {
-				res[i] = float64(-math.MaxFloat64)
-			} else if math.IsInf(mustFloat64(res[i]), 1) {
-				res[i] = float64(math.MaxFloat64)
+		res := makeRes(arr, reflect.TypeOf(float64(1)), t.TensorShape.Dim)
+		switch shaped := res.(type) {
+		case []interface{}:
+			for i := range shaped {
+				if math.IsInf(float64(mustFloat32(shaped[i])), -1) {
+					shaped[i] = float32(-math.MaxFloat32)
+				} else if math.IsInf(float64(mustFloat32(shaped[i])), 1) {
+					shaped[i] = float32(math.MaxFloat32)
+				}
 			}
+			return shapeContainer(t.TensorShape.Dim, shaped)
 		}
-		return shapeContainer(t.TensorShape.Dim, res)
+		return res
 	case tf.DataType_DT_STRING:
 		res := make([]interface{}, len(t.StringVal))
 		for i := range res {
@@ -249,8 +276,9 @@ func tensor2Go(t *tf.TensorProto) interface{} {
 	return nil
 }
 
-func makeRes(arr interface{}, type_ reflect.Type) []interface{} {
+func makeRes(arr interface{}, type_ reflect.Type, dim []*tf.TensorShapeProto_Dim) interface{} {
 	res := make([]interface{}, 0)
+	plain := len(dim) < 1
 
 	// First, convert byte array to numeric array if it takes place.
 	switch v := arr.(type) {
@@ -266,6 +294,10 @@ func makeRes(arr interface{}, type_ reflect.Type) []interface{} {
 	}
 
 	switch v := arr.(type) {
+	case []bool:
+		for _, el := range v {
+			res = append(res, el)
+		}
 	case []int32:
 		for _, el := range v {
 			res = append(res, el)
@@ -284,6 +316,10 @@ func makeRes(arr interface{}, type_ reflect.Type) []interface{} {
 		}
 	case []byte:
 
+	}
+
+	if plain && len(res) == 1 {
+		return res[0]
 	}
 
 	return res
@@ -329,9 +365,11 @@ func fillBaseTensor(data interface{}, proto *tf.TensorProto) error {
 		return addBytes(proto.Dtype, proto, v)
 	case string:
 		return addString(proto.Dtype, proto, v)
+	case bool:
+		return addBool(proto.Dtype, proto, v)
 	}
 
-	return errors.New("Unsupported type")
+	return fmt.Errorf("Unsupported type: %v", reflect.TypeOf(data))
 }
 
 func fillTensor(data interface{}, proto *tf.TensorProto, nesting int) error {
@@ -426,6 +464,16 @@ func addFloat32(mtype tf.DataType, proto *tf.TensorProto, v float32) error {
 		proto.IntVal = append(proto.IntVal, int32(v))
 	default:
 		return fmt.Errorf("can't convert float32 to tf:%v", mtype)
+	}
+	return nil
+}
+
+func addBool(mtype tf.DataType, proto *tf.TensorProto, v bool) error {
+	switch mtype {
+	case tf.DataType_DT_BOOL:
+		proto.BoolVal = append(proto.BoolVal, v)
+	default:
+		return fmt.Errorf("can't convert bool to tf:%v", mtype)
 	}
 	return nil
 }
