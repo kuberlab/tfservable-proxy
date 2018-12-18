@@ -5,11 +5,11 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"os"
+	"os/signal"
 	"time"
 
 	"github.com/kuberlab/tfservable-proxy/pkg/tfhttp"
-	"os"
-	"os/signal"
 )
 
 var (
@@ -21,7 +21,7 @@ func main() {
 	flag.IntVar(&port, "port", 8082, "Proxy port")
 	flag.IntVar(&timeout, "timeout", 300, "Timeout for model call in sec")
 
-	proxy := tfhttp.TFHttpProxy{
+	proxy := tfhttp.Proxy{
 		Timeout: time.Duration(timeout) * time.Second,
 	}
 
