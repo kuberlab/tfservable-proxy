@@ -23,7 +23,7 @@ const (
 	MaxMsgLength = 1024 * 1024 * 64 // 64 MB
 )
 
-type TFFeatureJSON struct {
+type FeatureJSON struct {
 	Float     *float32   `json:"float,omitempty"`
 	FloatList *[]float32 `json:"float_list,omitempty"`
 	Int       *int64     `json:"int,omitempty"`
@@ -32,12 +32,12 @@ type TFFeatureJSON struct {
 	BytesList *[][]byte  `json:"bytes_list,omitempty"`
 }
 
-type TFInputJSON struct {
+type InputJSON struct {
 	Dtype tf.DataType `json:"dtype,omitempty"`
 	Data  interface{} `json:"data,omitempty"`
 }
 
-func (t *TFInputJSON) Tensor() (*tf.TensorProto, error) {
+func (t *InputJSON) Tensor() (*tf.TensorProto, error) {
 	proto := &tf.TensorProto{
 		Dtype:       t.Dtype,
 		TensorShape: &tf.TensorShapeProto{},
@@ -51,13 +51,13 @@ func (t *TFInputJSON) Tensor() (*tf.TensorProto, error) {
 }
 
 type ModelData struct {
-	TFFeatures  []map[string]TFFeatureJSON `json:"features,omitempty"`
-	Inputs      map[string]TFInputJSON     `json:"inputs,omitempty"`
-	OutFilter   []string                   `json:"out_filter,omitempty"`
-	OutMimeType string                     `json:"out_mime_type,omitempty"`
+	TFFeatures  []map[string]FeatureJSON `json:"features,omitempty"`
+	Inputs      map[string]InputJSON     `json:"inputs,omitempty"`
+	OutFilter   []string                 `json:"out_filter,omitempty"`
+	OutMimeType string                   `json:"out_mime_type,omitempty"`
 }
 
-func (f *TFFeatureJSON) TFFeature() *example.Feature {
+func (f *FeatureJSON) TFFeature() *example.Feature {
 	if f.Float != nil {
 		return &example.Feature{
 			Kind: &example.Feature_FloatList{
@@ -174,7 +174,7 @@ func CallTF(ctx context.Context, servingAddr string, model string, version int64
 		grpc.WithInsecure(),
 		grpc.WithDefaultCallOptions(grpc.MaxCallRecvMsgSize(MaxMsgLength)),
 	)
-	defer func(){
+	defer func() {
 		if conn != nil {
 			conn.Close()
 		}
@@ -345,7 +345,7 @@ func fillTensor(data interface{}, proto *tf.TensorProto, nesting int) error {
 		for _, v1 := range v {
 			switch v2 := v1.(type) {
 			case []interface{}:
-				fillTensor(v2, proto, nesting+1)
+				_ = fillTensor(v2, proto, nesting+1)
 			default:
 				if err := fillBaseTensor(v2, proto); err != nil {
 					return err

@@ -7,11 +7,11 @@ import (
 	"github.com/kuberlab/tfservable-proxy/pkg/tf"
 )
 
-type propertyParser func(feature *tf.TFFeatureJSON) (tfcore.DataType, func(val string) (interface{}, error))
-type binaryParser func(feature *tf.TFFeatureJSON, data []byte) (tfcore.DataType, interface{})
+type propertyParser func(feature *tf.FeatureJSON) (tfcore.DataType, func(val string) (interface{}, error))
+type binaryParser func(feature *tf.FeatureJSON, data []byte) (tfcore.DataType, interface{})
 
 var (
-	floatFeatureParser = func(feature *tf.TFFeatureJSON, data []byte) (tfcore.DataType, interface{}) {
+	floatFeatureParser = func(feature *tf.FeatureJSON, data []byte) (tfcore.DataType, interface{}) {
 		if feature != nil {
 			values := make([]float32, len(data))
 			for i, b := range data {
@@ -26,7 +26,7 @@ var (
 		}
 		return tfcore.DataType_DT_FLOAT, values
 	}
-	intFeatureParser = func(feature *tf.TFFeatureJSON, data []byte) (tfcore.DataType, interface{}) {
+	intFeatureParser = func(feature *tf.FeatureJSON, data []byte) (tfcore.DataType, interface{}) {
 		if feature != nil {
 			values := make([]int64, len(data))
 			for i, b := range data {
@@ -43,7 +43,7 @@ var (
 	}
 	binaryParsers = map[string]binaryParser{
 		"float": floatFeatureParser,
-		"double": func(feature *tf.TFFeatureJSON, data []byte) (tfcore.DataType, interface{}) {
+		"double": func(feature *tf.FeatureJSON, data []byte) (tfcore.DataType, interface{}) {
 			if feature != nil {
 				return floatFeatureParser(feature, data)
 			}
@@ -54,7 +54,7 @@ var (
 			return tfcore.DataType_DT_DOUBLE, values
 		},
 		"int": intFeatureParser,
-		"int8": func(feature *tf.TFFeatureJSON, data []byte) (tfcore.DataType, interface{}) {
+		"int8": func(feature *tf.FeatureJSON, data []byte) (tfcore.DataType, interface{}) {
 			if feature != nil {
 				return intFeatureParser(feature, data)
 			}
@@ -64,7 +64,7 @@ var (
 			}
 			return tfcore.DataType_DT_INT8, values
 		},
-		"int16": func(feature *tf.TFFeatureJSON, data []byte) (tfcore.DataType, interface{}) {
+		"int16": func(feature *tf.FeatureJSON, data []byte) (tfcore.DataType, interface{}) {
 			if feature != nil {
 				return intFeatureParser(feature, data)
 			}
@@ -74,7 +74,7 @@ var (
 			}
 			return tfcore.DataType_DT_INT16, values
 		},
-		"int32": func(feature *tf.TFFeatureJSON, data []byte) (tfcore.DataType, interface{}) {
+		"int32": func(feature *tf.FeatureJSON, data []byte) (tfcore.DataType, interface{}) {
 			if feature != nil {
 				return intFeatureParser(feature, data)
 			}
@@ -84,7 +84,7 @@ var (
 			}
 			return tfcore.DataType_DT_INT32, values
 		},
-		"int64": func(feature *tf.TFFeatureJSON, data []byte) (tfcore.DataType, interface{}) {
+		"int64": func(feature *tf.FeatureJSON, data []byte) (tfcore.DataType, interface{}) {
 			if feature != nil {
 				return intFeatureParser(feature, data)
 			}
@@ -94,7 +94,7 @@ var (
 			}
 			return tfcore.DataType_DT_INT64, values
 		},
-		"uint8": func(feature *tf.TFFeatureJSON, data []byte) (tfcore.DataType, interface{}) {
+		"uint8": func(feature *tf.FeatureJSON, data []byte) (tfcore.DataType, interface{}) {
 			if feature != nil {
 				return intFeatureParser(feature, data)
 			}
@@ -104,7 +104,7 @@ var (
 			}
 			return tfcore.DataType_DT_UINT8, values
 		},
-		"uint16": func(feature *tf.TFFeatureJSON, data []byte) (tfcore.DataType, interface{}) {
+		"uint16": func(feature *tf.FeatureJSON, data []byte) (tfcore.DataType, interface{}) {
 			if feature != nil {
 				return intFeatureParser(feature, data)
 			}
@@ -114,7 +114,7 @@ var (
 			}
 			return tfcore.DataType_DT_UINT16, values
 		},
-		"bytes": func(feature *tf.TFFeatureJSON, data []byte) (tfcore.DataType, interface{}) {
+		"bytes": func(feature *tf.FeatureJSON, data []byte) (tfcore.DataType, interface{}) {
 			if feature != nil {
 				bytesData := [][]byte{data}
 				feature.BytesList = &bytesData
@@ -122,7 +122,7 @@ var (
 			values := []interface{}{data}
 			return tfcore.DataType_DT_STRING, values
 		},
-		"strings": func(feature *tf.TFFeatureJSON, data []byte) (tfcore.DataType, interface{}) {
+		"strings": func(feature *tf.FeatureJSON, data []byte) (tfcore.DataType, interface{}) {
 			if feature != nil {
 				bytesData := [][]byte{data}
 				feature.BytesList = &bytesData
@@ -130,14 +130,14 @@ var (
 			values := []interface{}{data}
 			return tfcore.DataType_DT_STRING, values
 		},
-		"byte": func(feature *tf.TFFeatureJSON, data []byte) (tfcore.DataType, interface{}) {
+		"byte": func(feature *tf.FeatureJSON, data []byte) (tfcore.DataType, interface{}) {
 			if feature != nil {
 				bytesData := [][]byte{data}
 				feature.BytesList = &bytesData
 			}
 			return tfcore.DataType_DT_STRING, data
 		},
-		"string": func(feature *tf.TFFeatureJSON, data []byte) (tfcore.DataType, interface{}) {
+		"string": func(feature *tf.FeatureJSON, data []byte) (tfcore.DataType, interface{}) {
 			if feature != nil {
 				bytesData := [][]byte{data}
 				feature.BytesList = &bytesData
@@ -146,7 +146,7 @@ var (
 		},
 	}
 	parsers = map[string]propertyParser{
-		"float": func(feature *tf.TFFeatureJSON) (tfcore.DataType, func(val string) (interface{}, error)) {
+		"float": func(feature *tf.FeatureJSON) (tfcore.DataType, func(val string) (interface{}, error)) {
 			return tfcore.DataType_DT_FLOAT, func(val string) (interface{}, error) {
 				if f, err := strconv.ParseFloat(val, 32); err != nil {
 					return nil, err
@@ -160,7 +160,7 @@ var (
 				}
 			}
 		},
-		"double": func(feature *tf.TFFeatureJSON) (tfcore.DataType, func(val string) (interface{}, error)) {
+		"double": func(feature *tf.FeatureJSON) (tfcore.DataType, func(val string) (interface{}, error)) {
 			return tfcore.DataType_DT_DOUBLE, func(val string) (interface{}, error) {
 				if f, err := strconv.ParseFloat(val, 64); err != nil {
 					return nil, err
@@ -174,7 +174,7 @@ var (
 				}
 			}
 		},
-		"int": func(feature *tf.TFFeatureJSON) (tfcore.DataType, func(val string) (interface{}, error)) {
+		"int": func(feature *tf.FeatureJSON) (tfcore.DataType, func(val string) (interface{}, error)) {
 			return tfcore.DataType_DT_INT64, func(val string) (interface{}, error) {
 				if f, err := strconv.ParseInt(val, 10, 64); err != nil {
 					return nil, err
@@ -188,7 +188,7 @@ var (
 				}
 			}
 		},
-		"int8": func(feature *tf.TFFeatureJSON) (tfcore.DataType, func(val string) (interface{}, error)) {
+		"int8": func(feature *tf.FeatureJSON) (tfcore.DataType, func(val string) (interface{}, error)) {
 			return tfcore.DataType_DT_INT8, func(val string) (interface{}, error) {
 				if f, err := strconv.ParseInt(val, 10, 64); err != nil {
 					return nil, err
@@ -202,7 +202,7 @@ var (
 				}
 			}
 		},
-		"int16": func(feature *tf.TFFeatureJSON) (tfcore.DataType, func(val string) (interface{}, error)) {
+		"int16": func(feature *tf.FeatureJSON) (tfcore.DataType, func(val string) (interface{}, error)) {
 			return tfcore.DataType_DT_INT16, func(val string) (interface{}, error) {
 				if f, err := strconv.ParseInt(val, 10, 64); err != nil {
 					return nil, err
@@ -216,7 +216,7 @@ var (
 				}
 			}
 		},
-		"int32": func(feature *tf.TFFeatureJSON) (tfcore.DataType, func(val string) (interface{}, error)) {
+		"int32": func(feature *tf.FeatureJSON) (tfcore.DataType, func(val string) (interface{}, error)) {
 			return tfcore.DataType_DT_INT32, func(val string) (interface{}, error) {
 				if f, err := strconv.ParseInt(val, 10, 64); err != nil {
 					return nil, err
@@ -230,7 +230,7 @@ var (
 				}
 			}
 		},
-		"int64": func(feature *tf.TFFeatureJSON) (tfcore.DataType, func(val string) (interface{}, error)) {
+		"int64": func(feature *tf.FeatureJSON) (tfcore.DataType, func(val string) (interface{}, error)) {
 			return tfcore.DataType_DT_INT64, func(val string) (interface{}, error) {
 				if f, err := strconv.ParseInt(val, 10, 64); err != nil {
 					return nil, err
@@ -244,7 +244,7 @@ var (
 				}
 			}
 		},
-		"uint8": func(feature *tf.TFFeatureJSON) (tfcore.DataType, func(val string) (interface{}, error)) {
+		"uint8": func(feature *tf.FeatureJSON) (tfcore.DataType, func(val string) (interface{}, error)) {
 			return tfcore.DataType_DT_UINT8, func(val string) (interface{}, error) {
 				if f, err := strconv.ParseInt(val, 10, 64); err != nil {
 					return nil, err
@@ -258,7 +258,7 @@ var (
 				}
 			}
 		},
-		"uint16": func(feature *tf.TFFeatureJSON) (tfcore.DataType, func(val string) (interface{}, error)) {
+		"uint16": func(feature *tf.FeatureJSON) (tfcore.DataType, func(val string) (interface{}, error)) {
 			return tfcore.DataType_DT_UINT8, func(val string) (interface{}, error) {
 				if f, err := strconv.ParseInt(val, 10, 64); err != nil {
 					return nil, err
@@ -272,7 +272,7 @@ var (
 				}
 			}
 		},
-		"string": func(feature *tf.TFFeatureJSON) (tfcore.DataType, func(val string) (interface{}, error)) {
+		"string": func(feature *tf.FeatureJSON) (tfcore.DataType, func(val string) (interface{}, error)) {
 			return tfcore.DataType_DT_STRING, func(val string) (interface{}, error) {
 				if feature != nil {
 					values := [][]byte{}

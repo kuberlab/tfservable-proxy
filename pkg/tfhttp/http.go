@@ -91,12 +91,12 @@ func (proxy Proxy) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 			model.OutFilter = strings.Split(v[0], ",")
 		}
 		if val, ok := req.MultipartForm.Value["raw_input"]; ok && strings.ToLower(val[0]) == "false" {
-			model.TFFeatures = make([]map[string]tf.TFFeatureJSON, 0)
+			model.TFFeatures = make([]map[string]tf.FeatureJSON, 0)
 			for k, v := range req.MultipartForm.Value {
 				p := strings.Split(k, "_")
 				if len(p) > 0 {
 					if parser, ok := parsers[p[0]]; ok {
-						feature := tf.TFFeatureJSON{}
+						feature := tf.FeatureJSON{}
 						_, valueParser := parser(&feature)
 						for _, s1 := range v {
 							for _, s2 := range strings.Split(s1, ",") {
@@ -115,7 +115,7 @@ func (proxy Proxy) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 				p := strings.Split(k, "_")
 				if len(p) > 0 && len(fHeader) > 0 {
 					if parser, ok := binaryParsers[p[0]]; ok {
-						feature := tf.TFFeatureJSON{}
+						feature := tf.FeatureJSON{}
 						file, err := fHeader[0].Open()
 						if err != nil {
 							returnError = err
@@ -140,7 +140,7 @@ func (proxy Proxy) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 			}
 
 		} else {
-			model.Inputs = map[string]tf.TFInputJSON{}
+			model.Inputs = map[string]tf.InputJSON{}
 			for k, v := range req.MultipartForm.Value {
 				values := make([]interface{}, 0)
 				p := strings.Split(k, "_")
@@ -158,7 +158,7 @@ func (proxy Proxy) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 								}
 							}
 						}
-						model.Inputs[strings.Join(p[1:], "_")] = tf.TFInputJSON{
+						model.Inputs[strings.Join(p[1:], "_")] = tf.InputJSON{
 							Dtype: dtype,
 							Data:  values,
 						}
@@ -192,7 +192,7 @@ func (proxy Proxy) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 							return
 						}
 						dtype, data := parser(nil, fileData)
-						model.Inputs[strings.Join(p[1:], "_")] = tf.TFInputJSON{
+						model.Inputs[strings.Join(p[1:], "_")] = tf.InputJSON{
 							Dtype: dtype,
 							Data:  data,
 						}
