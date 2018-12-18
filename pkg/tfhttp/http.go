@@ -90,8 +90,8 @@ func (proxy Proxy) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 		if v, ok := req.MultipartForm.Value["out_filters"]; ok && len(v) > 0 {
 			model.OutFilter = strings.Split(v[0], ",")
 		}
-		if val, ok := req.MultipartForm.Value["raw_input"]; ok && strings.ToLower(val[0]) == "false" {
-			model.TFFeatures = make([]map[string]tf.FeatureJSON, 0)
+		if _, ok := req.MultipartForm.Value["raw_input"]; !ok {
+			model.TFFeatures = []map[string]tf.FeatureJSON{{}}
 			for k, v := range req.MultipartForm.Value {
 				p := strings.Split(k, "_")
 				if len(p) > 0 {
@@ -162,15 +162,15 @@ func (proxy Proxy) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 							Dtype: dtype,
 							Data:  values,
 						}
-					} else {
-						returnError = fmt.Errorf(
-							"Unsupported handler %v; currently supported: %v",
-							strings.Trim(p[0], "\n"),
-							parsersList(),
-						)
-						status = http.StatusBadRequest
-						return
-					}
+					} // else {
+					//	returnError = fmt.Errorf(
+					//		"Unsupported handler %v; currently supported: %v",
+					//		strings.Trim(p[0], "\n"),
+					//		parsersList(),
+					//	)
+					//	status = http.StatusBadRequest
+					//	return
+					//}
 				}
 			}
 
