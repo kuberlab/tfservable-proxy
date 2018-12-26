@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"math"
 	"reflect"
+	"unicode"
 
 	"github.com/Sirupsen/logrus"
 	"github.com/dreyk/tensorflow-serving-go/pkg/tensorflow/core/example"
@@ -268,7 +269,18 @@ func tensor2Go(t *tf.TensorProto) interface{} {
 	case tf.DataType_DT_STRING:
 		res := make([]interface{}, len(t.StringVal))
 		for i := range res {
-			res[i] = t.StringVal[i]
+			pureString := true
+			for j := range t.StringVal[i] {
+				if t.StringVal[i][j] > unicode.MaxASCII {
+					pureString = false
+					break
+				}
+			}
+			if pureString {
+				res[i] = string(t.StringVal[i])
+			} else {
+				res[i] = t.StringVal[i]
+			}
 		}
 		return shapeContainer(t.TensorShape.Dim, res)
 
