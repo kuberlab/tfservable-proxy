@@ -282,8 +282,13 @@ func tensor2Go(t *tf.TensorProto) interface{} {
 				res[i] = t.StringVal[i]
 			}
 		}
-		return shapeContainer(t.TensorShape.Dim, res)
-
+		if len(t.TensorShape.Dim) > 0 {
+			return shapeContainer(t.TensorShape.Dim, res)
+		} else {
+			if len(res) > 0 {
+				return res[0]
+			}
+		}
 	}
 	return nil
 }
