@@ -271,7 +271,7 @@ func tensor2Go(t *tf.TensorProto) interface{} {
 		for i := range res {
 			pureString := true
 			for j := range t.StringVal[i] {
-				if t.StringVal[i][j] > unicode.MaxLatin1 {
+				if t.StringVal[i][j] > unicode.MaxASCII {
 					pureString = false
 					break
 				}
