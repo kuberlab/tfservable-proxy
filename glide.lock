@@ -1,5 +1,5 @@
-hash: ebb424e62e6ce1c7795ce1ff9e584dabfa969306c9a5234a5fc4093adb2c43da
-updated: 2018-11-20T00:27:47.670951224+04:00
+hash: 53fa983a68fffbbd261b87788c8c8ce62da942f06e547a1839d38cc8da7fb700
+updated: 2019-03-06T21:38:50.10165195+04:00
 imports:
 - name: github.com/dreyk/tensorflow-serving-go
   version: 7a1e21ce448abfa4bb18d4dd7ecb9d69f1c78d0c
@@ -10,7 +10,7 @@ imports:
   - pkg/tensorflow/core/protobuf
   - pkg/tensorflow_serving/apis
 - name: github.com/golang/protobuf
-  version: 52132540909e117f2b98b0694383dc0ab1e1deca
+  version: 1d3f30b51784bec5aad268e59fd3c2fc1c2fe73f
   subpackages:
   - proto
   - ptypes
@@ -19,7 +19,7 @@ imports:
   - ptypes/timestamp
   - ptypes/wrappers
 - name: github.com/Sirupsen/logrus
-  version: 55eb11d21d2a31a3cc93838241d04800f52e823d
+  version: 3ec0642a7fb6488f65b06f9040adc67e3990296a
 - name: golang.org/x/net
   version: 1c05540f6879653db88113bc4a2b70aec4bd491f
   subpackages:
@@ -42,7 +42,7 @@ imports:
   - unicode/bidi
   - unicode/norm
 - name: google.golang.org/genproto
-  version: 2b5a72b8730b0b16380010cfe5286c42108d88e7
+  version: c66870c02cf823ceb633bcd05be3c7cda29976f4
   subpackages:
   - googleapis/rpc/status
 - name: google.golang.org/grpc
