@@ -319,6 +319,14 @@ func makeRes(arr interface{}, type_ reflect.Type, dim []*tf.TensorShapeProto_Dim
 		for _, el := range v {
 			res = append(res, el)
 		}
+	case []int16:
+		for _, el := range v {
+			res = append(res, el)
+		}
+	case []int8:
+		for _, el := range v {
+			res = append(res, el)
+		}
 	case []int64:
 		for _, el := range v {
 			res = append(res, el)
@@ -328,6 +336,22 @@ func makeRes(arr interface{}, type_ reflect.Type, dim []*tf.TensorShapeProto_Dim
 			res = append(res, el)
 		}
 	case []float64:
+		for _, el := range v {
+			res = append(res, el)
+		}
+	case []uint:
+		for _, el := range v {
+			res = append(res, el)
+		}
+	case []uint16:
+		for _, el := range v {
+			res = append(res, el)
+		}
+	case []uint32:
+		for _, el := range v {
+			res = append(res, el)
+		}
+	case []uint64:
 		for _, el := range v {
 			res = append(res, el)
 		}
@@ -367,7 +391,7 @@ func fillBaseTensor(data interface{}, proto *tf.TensorProto) error {
 	case int8:
 		return addInt64(proto.Dtype, proto, int64(v))
 	case int16:
-		return addInt64(proto.Dtype, proto, v)
+		return addInt64(proto.Dtype, proto, int64(v))
 	case int32:
 		return addInt64(proto.Dtype, proto, int64(v))
 	case int:
