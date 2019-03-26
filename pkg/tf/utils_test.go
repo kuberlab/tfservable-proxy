@@ -1,10 +1,13 @@
 package tf
 
 import (
-	"encoding/json"
 	"fmt"
 	"testing"
+
+	"github.com/json-iterator/go"
 )
+
+var json = jsoniter.ConfigCompatibleWithStandardLibrary
 
 func sum(arr []int32) int64 {
 	summ := int64(0)

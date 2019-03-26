@@ -2,7 +2,6 @@ package tfhttp
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"io/ioutil"
@@ -13,8 +12,11 @@ import (
 	"time"
 
 	"github.com/Sirupsen/logrus"
+	"github.com/json-iterator/go"
 	"github.com/kuberlab/tfservable-proxy/pkg/tf"
 )
+
+var json = jsoniter.ConfigCompatibleWithStandardLibrary
 
 const (
 	defaultMaxMemory = 50 << 20 // 50 MB
@@ -32,7 +34,7 @@ func (proxy Proxy) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	status := http.StatusOK
 	var returnError error
 	defer func() {
-		log.Printf("%s -> %d(%.1fms)\n", req.RequestURI, status, time.Since(start).Seconds()*1000)
+		log.Printf("%s -> %d(%v)\n", req.RequestURI, status, time.Since(start))
 		if returnError != nil {
 			w.WriteHeader(status)
 			errStr := returnError.Error()
