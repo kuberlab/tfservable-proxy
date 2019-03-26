@@ -208,7 +208,7 @@ func tensor2Go(t *tf.TensorProto) interface{} {
 			return shapeContainer(t.TensorShape.Dim, shaped)
 		}
 		return res
-	case tf.DataType_DT_INT64:
+	case 23, tf.DataType_DT_INT64:
 		var arr interface{} = t.Int64Val
 		if t.Int64Val == nil {
 			arr = t.TensorContent
@@ -219,7 +219,7 @@ func tensor2Go(t *tf.TensorProto) interface{} {
 			return shapeContainer(t.TensorShape.Dim, shaped)
 		}
 		return res
-	case tf.DataType_DT_INT32:
+	case 22, tf.DataType_DT_INT32, tf.DataType_DT_UINT16, tf.DataType_DT_UINT8, tf.DataType_DT_INT8, tf.DataType_DT_INT16:
 		var arr interface{} = t.IntVal
 		if t.IntVal == nil {
 			arr = t.TensorContent
@@ -461,6 +461,10 @@ func addInt64(mtype tf.DataType, proto *tf.TensorProto, v int64) error {
 		proto.IntVal = append(proto.IntVal, int32(v))
 	case tf.DataType_DT_UINT16:
 		proto.IntVal = append(proto.IntVal, int32(v))
+	case 23: // UINT64
+		proto.Int64Val = append(proto.Int64Val, int64(v))
+	case 22: // UINT32
+		proto.IntVal = append(proto.IntVal, int32(v))
 	default:
 		return fmt.Errorf("can't convert int64 to tf:%v", mtype)
 	}
@@ -484,6 +488,10 @@ func addFloat64(mtype tf.DataType, proto *tf.TensorProto, v float64) error {
 	case tf.DataType_DT_UINT8:
 		proto.IntVal = append(proto.IntVal, int32(v))
 	case tf.DataType_DT_UINT16:
+		proto.IntVal = append(proto.IntVal, int32(v))
+	case 23: // UINT64
+		proto.Int64Val = append(proto.Int64Val, int64(v))
+	case 22: // UINT32
 		proto.IntVal = append(proto.IntVal, int32(v))
 	default:
 		return fmt.Errorf("can't convert float64 to tf:%v", mtype)
