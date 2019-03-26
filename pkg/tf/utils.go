@@ -360,23 +360,29 @@ func shapeContainer(dim []*tf.TensorShapeProto_Dim, data []interface{}) interfac
 
 func fillBaseTensor(data interface{}, proto *tf.TensorProto) error {
 	switch v := data.(type) {
-	case float64:
-		return addFloat64(proto.Dtype, proto, v)
 	case float32:
 		return addFloat32(proto.Dtype, proto, v)
-	case int64:
-		return addInt64(proto.Dtype, proto, v)
+	case float64:
+		return addFloat64(proto.Dtype, proto, v)
 	case int8:
 		return addInt64(proto.Dtype, proto, int64(v))
 	case int16:
-		return addInt64(proto.Dtype, proto, int64(v))
+		return addInt64(proto.Dtype, proto, v)
 	case int32:
 		return addInt64(proto.Dtype, proto, int64(v))
 	case int:
 		return addInt64(proto.Dtype, proto, int64(v))
+	case int64:
+		return addInt64(proto.Dtype, proto, int64(v))
 	case uint8:
 		return addInt64(proto.Dtype, proto, int64(v))
 	case uint16:
+		return addInt64(proto.Dtype, proto, int64(v))
+	case uint32:
+		return addInt64(proto.Dtype, proto, int64(v))
+	case uint64:
+		return addInt64(proto.Dtype, proto, int64(v))
+	case uint:
 		return addInt64(proto.Dtype, proto, int64(v))
 	case []byte:
 		return addBytes(proto.Dtype, proto, v)
