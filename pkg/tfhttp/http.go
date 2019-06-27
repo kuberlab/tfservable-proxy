@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"github.com/gorilla/mux"
 	"io/ioutil"
 	"log"
 	"net/http"
@@ -27,9 +28,35 @@ type Proxy struct {
 	URIPrefix      string
 	DefaultAddress string
 	DefaultPort    int
+
+	router *mux.Router
 }
 
-func (proxy Proxy) ServeHTTP(w http.ResponseWriter, req *http.Request) {
+func NewProxy(URIPrefix string, enableStatic bool) *Proxy {
+	if !strings.HasSuffix(URIPrefix, "/") {
+		URIPrefix = URIPrefix + "/"
+	}
+	if !strings.HasPrefix(URIPrefix, "/") {
+		URIPrefix = "/" + URIPrefix
+	}
+	p := &Proxy{URIPrefix: URIPrefix}
+
+	p.router = mux.NewRouter()
+	p.router.PathPrefix(URIPrefix).HandlerFunc(p.PredictHandler)
+	if enableStatic {
+		p.router.PathPrefix("/").Handler(
+			http.FileServer(http.Dir("./static")),
+		)
+	}
+
+	return p
+}
+
+func (proxy *Proxy) ServeHTTP(w http.ResponseWriter, req *http.Request) {
+	proxy.router.ServeHTTP(w, req)
+}
+
+func (proxy *Proxy) PredictHandler(w http.ResponseWriter, req *http.Request) {
 	start := time.Now()
 	status := http.StatusOK
 	var returnError error

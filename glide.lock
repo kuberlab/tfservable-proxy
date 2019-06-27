@@ -1,5 +1,5 @@
-hash: a9f1c9e01f37d6a9f117f9d6d56ee3cceda49b20eed9f2e17e892c098f0bd431
-updated: 2019-03-26T11:42:56.0175961+04:00
+hash: 078212e8402ff2ef5c717d55757b2a8245d472bea44e138e72faec0df1fa8b7a
+updated: 2019-06-27T17:04:37.601158739+04:00
 imports:
 - name: github.com/dreyk/tensorflow-serving-go
   version: 7a1e21ce448abfa4bb18d4dd7ecb9d69f1c78d0c
@@ -10,7 +10,7 @@ imports:
   - pkg/tensorflow/core/protobuf
   - pkg/tensorflow_serving/apis
 - name: github.com/golang/protobuf
-  version: d3c38a4eb4970272b87a425ae00ccc4548e2f9bb
+  version: b285ee9cfc6c881bb20c0d8dc73370ea9b9ec90f
   subpackages:
   - proto
   - ptypes
@@ -18,6 +18,8 @@ imports:
   - ptypes/duration
   - ptypes/timestamp
   - ptypes/wrappers
+- name: github.com/gorilla/mux
+  version: 392c28fe23e1c45ddba891b0320b3b5df220beea
 - name: github.com/json-iterator/go
   version: 0ff49de124c6f76f8494e194af75bde0f1a49a29
 - name: github.com/modern-go/concurrent

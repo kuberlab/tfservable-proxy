@@ -13,22 +13,26 @@ import (
 )
 
 var (
-	timeout = 300
-	port    int
+	timeout        = 300
+	port           int
+	URIPrefix      string
+	DefaultPort    int
+	DefaultAddress string
 )
 
 func main() {
 	flag.IntVar(&port, "port", 8082, "Proxy port")
 	flag.IntVar(&timeout, "timeout", 300, "Timeout for model call in sec")
 
-	proxy := tfhttp.Proxy{
-		Timeout: time.Duration(timeout) * time.Second,
-	}
-
-	flag.StringVar(&proxy.DefaultAddress, "default-addr", "", "Default target address if applicable")
-	flag.IntVar(&proxy.DefaultPort, "default-port", 9000, "Default target server port")
-	flag.StringVar(&proxy.URIPrefix, "uri-prefix", "proxy", "URI path for proxy")
+	flag.StringVar(&DefaultAddress, "default-addr", "", "Default target address if applicable")
+	flag.IntVar(&DefaultPort, "default-port", 9000, "Default target server port")
+	flag.StringVar(&URIPrefix, "uri-prefix", "proxy", "URI path for proxy")
 	flag.Parse()
+
+	proxy := tfhttp.NewProxy(URIPrefix, true)
+	proxy.DefaultAddress = DefaultAddress
+	proxy.DefaultPort = DefaultPort
+	proxy.Timeout = time.Duration(timeout)
 
 	if proxy.DefaultAddress != "" {
 		log.Printf("Default target address: %v", proxy.DefaultAddress)
