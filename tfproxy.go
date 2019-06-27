@@ -18,6 +18,7 @@ var (
 	URIPrefix      string
 	DefaultPort    int
 	DefaultAddress string
+	staticRoot     string
 )
 
 func main() {
@@ -27,9 +28,10 @@ func main() {
 	flag.StringVar(&DefaultAddress, "default-addr", "", "Default target address if applicable")
 	flag.IntVar(&DefaultPort, "default-port", 9000, "Default target server port")
 	flag.StringVar(&URIPrefix, "uri-prefix", "proxy", "URI path for proxy")
+	flag.StringVar(&staticRoot, "static-root", "./static", "URI path for proxy")
 	flag.Parse()
 
-	proxy := tfhttp.NewProxy(URIPrefix, true)
+	proxy := tfhttp.NewProxy(URIPrefix, staticRoot)
 	proxy.DefaultAddress = DefaultAddress
 	proxy.DefaultPort = DefaultPort
 	proxy.Timeout = time.Duration(timeout)

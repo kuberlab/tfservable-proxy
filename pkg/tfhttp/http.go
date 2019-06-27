@@ -32,7 +32,7 @@ type Proxy struct {
 	router *mux.Router
 }
 
-func NewProxy(URIPrefix string, enableStatic bool) *Proxy {
+func NewProxy(URIPrefix string, staticRoot string) *Proxy {
 	if !strings.HasSuffix(URIPrefix, "/") {
 		URIPrefix = URIPrefix + "/"
 	}
@@ -43,9 +43,9 @@ func NewProxy(URIPrefix string, enableStatic bool) *Proxy {
 
 	p.router = mux.NewRouter()
 	p.router.PathPrefix(URIPrefix).HandlerFunc(p.PredictHandler)
-	if enableStatic {
+	if staticRoot != "" {
 		p.router.PathPrefix("/").Handler(
-			http.FileServer(http.Dir("./static")),
+			http.FileServer(http.Dir(staticRoot)),
 		)
 	}
 
