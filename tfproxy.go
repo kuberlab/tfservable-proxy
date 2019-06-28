@@ -40,7 +40,7 @@ func main() {
 		log.Printf("Default target address: %v", proxy.DefaultAddress)
 	}
 	log.Printf("Default target port: %v", proxy.DefaultPort)
-	log.Printf("Proxy will be available on: http://0.0.0.0:%v/%v", port, proxy.URIPrefix)
+	log.Printf("Proxy will be available on: http://0.0.0.0:%v%v", port, proxy.URIPrefix)
 
 	log.Printf("Listen on :%d\n", port)
 
