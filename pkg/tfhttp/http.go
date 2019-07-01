@@ -4,7 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"github.com/gorilla/mux"
+	"io"
 	"io/ioutil"
 	"log"
 	"net/http"
@@ -13,6 +13,7 @@ import (
 	"time"
 
 	"github.com/Sirupsen/logrus"
+	"github.com/gorilla/mux"
 	"github.com/json-iterator/go"
 	"github.com/kuberlab/tfservable-proxy/pkg/tf"
 )
@@ -43,6 +44,8 @@ func NewProxy(URIPrefix string, staticRoot string) *Proxy {
 
 	p.router = mux.NewRouter()
 	p.router.PathPrefix(URIPrefix).HandlerFunc(p.PredictHandler)
+	p.router.PathPrefix("/hls/").HandlerFunc(p.ProxyStreams)
+	p.router.PathPrefix("/mjpg/").HandlerFunc(p.ProxyStreams)
 	if staticRoot != "" {
 		p.router.PathPrefix("/").Handler(
 			http.FileServer(http.Dir(staticRoot)),
@@ -54,6 +57,43 @@ func NewProxy(URIPrefix string, staticRoot string) *Proxy {
 
 func (proxy *Proxy) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	proxy.router.ServeHTTP(w, req)
+}
+
+func (proxy *Proxy) ProxyStreams(w http.ResponseWriter, req *http.Request) {
+	client := &http.Client{}
+	if strings.HasSuffix(req.URL.Path, "m3u8") || strings.HasSuffix(req.URL.Path, "ts") {
+		resp, err := client.Get(fmt.Sprintf("http://localhost:8080%v", req.URL.Path))
+
+		if err != nil {
+			log.Println(err)
+			return
+		}
+		w.WriteHeader(resp.StatusCode)
+		for k, v := range resp.Header {
+			for _, hv := range v {
+				w.Header().Add(k, hv)
+			}
+		}
+		defer resp.Body.Close()
+		io.Copy(w, resp.Body)
+	}
+	if strings.HasSuffix(req.URL.Path, "mjpg") {
+		splitted := strings.Split(req.URL.Path, "/")
+		resp, err := client.Get(fmt.Sprintf("http://localhost:8000/%v", splitted[len(splitted)-1]))
+
+		if err != nil {
+			log.Println(err)
+			return
+		}
+		w.WriteHeader(resp.StatusCode)
+		for k, v := range resp.Header {
+			for _, hv := range v {
+				w.Header().Add(k, hv)
+			}
+		}
+		defer resp.Body.Close()
+		io.Copy(w, resp.Body)
+	}
 }
 
 func (proxy *Proxy) PredictHandler(w http.ResponseWriter, req *http.Request) {

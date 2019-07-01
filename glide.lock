@@ -1,5 +1,5 @@
-hash: 078212e8402ff2ef5c717d55757b2a8245d472bea44e138e72faec0df1fa8b7a
-updated: 2019-06-27T17:04:37.601158739+04:00
+hash: 0866df9bc4fbce6f112355980134668b404a78948b7783838b82dac4c8353841
+updated: 2019-07-01T16:37:07.615515563+04:00
 imports:
 - name: github.com/dreyk/tensorflow-serving-go
   version: 7a1e21ce448abfa4bb18d4dd7ecb9d69f1c78d0c
@@ -18,6 +18,10 @@ imports:
   - ptypes/duration
   - ptypes/timestamp
   - ptypes/wrappers
+- name: github.com/gorilla/context
+  version: 08b5f424b9271eedf6f9f0ce86cb9396ed337a42
+- name: github.com/gorilla/handlers
+  version: 7b2fac1d811ad3965932935b8c067c60a5c61fb9
 - name: github.com/gorilla/mux
   version: 392c28fe23e1c45ddba891b0320b3b5df220beea
 - name: github.com/json-iterator/go

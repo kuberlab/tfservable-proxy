@@ -34,7 +34,7 @@ func main() {
 	proxy := tfhttp.NewProxy(URIPrefix, staticRoot)
 	proxy.DefaultAddress = DefaultAddress
 	proxy.DefaultPort = DefaultPort
-	proxy.Timeout = time.Duration(timeout)
+	proxy.Timeout = time.Duration(timeout) * time.Second
 
 	if proxy.DefaultAddress != "" {
 		log.Printf("Default target address: %v", proxy.DefaultAddress)
