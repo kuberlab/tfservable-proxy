@@ -31,7 +31,7 @@ func main() {
 	flag.StringVar(&staticRoot, "static-root", "./static", "Path for static content")
 	flag.Parse()
 
-	proxy := tfhttp.NewProxy(URIPrefix, staticRoot)
+	proxy := tfhttp.NewProxy("/", URIPrefix, staticRoot)
 	proxy.DefaultAddress = DefaultAddress
 	proxy.DefaultPort = DefaultPort
 	proxy.Timeout = time.Duration(timeout) * time.Second

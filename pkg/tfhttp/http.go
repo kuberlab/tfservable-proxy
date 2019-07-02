@@ -27,27 +27,37 @@ const (
 type Proxy struct {
 	Timeout        time.Duration
 	URIPrefix      string
+	globalPrefix   string
 	DefaultAddress string
 	DefaultPort    int
 
 	router *mux.Router
 }
 
-func NewProxy(URIPrefix string, staticRoot string) *Proxy {
-	if !strings.HasSuffix(URIPrefix, "/") {
-		URIPrefix = URIPrefix + "/"
+func NewProxy(globalPrefix, predictPrefix string, staticRoot string) *Proxy {
+	predictPrefix = strings.TrimPrefix(predictPrefix, "/")
+	if !strings.HasSuffix(predictPrefix, "/") {
+		predictPrefix = predictPrefix + "/"
 	}
-	if !strings.HasPrefix(URIPrefix, "/") {
-		URIPrefix = "/" + URIPrefix
+
+	globalPrefix = strings.TrimPrefix(globalPrefix, "/")
+	globalPrefix = strings.TrimSuffix(globalPrefix, "/")
+	if globalPrefix != "" {
+		globalPrefix = "/" + globalPrefix + "/"
+	} else {
+		globalPrefix = "/"
 	}
-	p := &Proxy{URIPrefix: URIPrefix}
+
+	predictPrefix = globalPrefix + predictPrefix
+
+	p := &Proxy{URIPrefix: predictPrefix, globalPrefix: globalPrefix}
 
 	p.router = mux.NewRouter()
-	p.router.PathPrefix(URIPrefix).HandlerFunc(p.PredictHandler)
-	p.router.PathPrefix("/hls/").HandlerFunc(p.ProxyStreams)
-	p.router.PathPrefix("/mjpg/").HandlerFunc(p.ProxyStreams)
+	p.router.PathPrefix(predictPrefix).HandlerFunc(p.PredictHandler)
+	p.router.PathPrefix(globalPrefix + "hls/").HandlerFunc(p.ProxyStreams)
+	p.router.PathPrefix(globalPrefix + "mjpg/").HandlerFunc(p.ProxyStreams)
 	if staticRoot != "" {
-		p.router.PathPrefix("/").Handler(
+		p.router.PathPrefix(globalPrefix).Handler(
 			http.FileServer(http.Dir(staticRoot)),
 		)
 	}
