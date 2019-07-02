@@ -89,20 +89,40 @@ func (proxy *Proxy) ProxyStreams(w http.ResponseWriter, req *http.Request) {
 	}
 	if strings.HasSuffix(req.URL.Path, "mjpg") {
 		splitted := strings.Split(req.URL.Path, "/")
-		resp, err := client.Get(fmt.Sprintf("http://localhost:8000/%v", splitted[len(splitted)-1]))
-
+		url := fmt.Sprintf("http://localhost:8000/%v", splitted[len(splitted)-1])
+		resp, boundary, err := connectChunker(url, "", "")
 		if err != nil {
 			log.Println(err)
 			return
 		}
-		w.WriteHeader(resp.StatusCode)
+		pubChan := make(chan []byte)
+		stopChan := make(chan bool)
+
 		for k, v := range resp.Header {
+			if strings.ToLower(k) == "x-frame-options" {
+				continue
+			}
 			for _, hv := range v {
 				w.Header().Add(k, hv)
 			}
 		}
-		defer resp.Body.Close()
-		io.Copy(w, resp.Body)
+		//w.Header().Set("Content-Type", "multipart/x-mixed-replace; boundary="+boundary)
+
+		go chunker(resp.Body, boundary, pubChan, stopChan)
+		for {
+			select {
+			case data, ok := <-pubChan:
+				if !ok {
+					stopChan = nil
+					return
+				}
+				_, err = w.Write(data)
+				if err != nil {
+					// Cannot write, close chunker
+					stopChan <- true
+				}
+			}
+		}
 	}
 }
 
