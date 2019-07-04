@@ -23,7 +23,7 @@ var (
 
 func main() {
 	flag.IntVar(&port, "port", 8082, "Proxy port")
-	flag.IntVar(&timeout, "timeout", 300, "Timeout for model call in sec")
+	flag.IntVar(&timeout, "timeout", 900, "Timeout for model call in sec")
 
 	flag.StringVar(&DefaultAddress, "default-addr", "", "Default target address if applicable")
 	flag.IntVar(&DefaultPort, "default-port", 9000, "Default target server port")
