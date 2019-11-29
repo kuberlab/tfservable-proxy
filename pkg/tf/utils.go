@@ -11,27 +11,15 @@ import (
 	"unicode"
 
 	"github.com/Sirupsen/logrus"
-	"github.com/dreyk/tensorflow-serving-go/pkg/tensorflow/core/example"
 	tf "github.com/dreyk/tensorflow-serving-go/pkg/tensorflow/core/framework"
 	"github.com/dreyk/tensorflow-serving-go/pkg/tensorflow_serving/apis"
 	googleproto "github.com/golang/protobuf/ptypes/wrappers"
 	"google.golang.org/grpc"
-	"google.golang.org/grpc/encoding"
 )
 
 const (
 	MaxMsgLength = 1024 * 1024 * 64 // 64 MB
 )
-
-type FeatureJSON struct {
-	Float     *float32   `json:"float,omitempty"`
-	FloatList *[]float32 `json:"float_list,omitempty"`
-	Int       *int64     `json:"int,omitempty"`
-	IntList   *[]int64   `json:"int_list,omitempty"`
-	Bytes     *[]byte    `json:"bytes,omitempty"`
-	BytesList *[][]byte  `json:"bytes_list,omitempty"`
-	BoolList  *[]bool    `json:"bool_list,omitempty"`
-}
 
 type InputJSON struct {
 	Dtype tf.DataType `json:"dtype,omitempty"`
@@ -52,64 +40,11 @@ func (t *InputJSON) Tensor() (*tf.TensorProto, error) {
 }
 
 type ModelData struct {
-	TFFeatures  []map[string]FeatureJSON `json:"features,omitempty"`
 	Inputs      map[string]InputJSON     `json:"inputs,omitempty"`
 	OutFilter   []string                 `json:"out_filter,omitempty"`
 	OutMimeType string                   `json:"out_mime_type,omitempty"`
 }
 
-func (f *FeatureJSON) TFFeature() *example.Feature {
-	if f.Float != nil {
-		return &example.Feature{
-			Kind: &example.Feature_FloatList{
-				FloatList: &example.FloatList{
-					Value: []float32{*f.Float},
-				},
-			},
-		}
-	} else if f.FloatList != nil {
-		return &example.Feature{
-			Kind: &example.Feature_FloatList{
-				FloatList: &example.FloatList{
-					Value: *f.FloatList,
-				},
-			},
-		}
-	} else if f.Int != nil {
-		return &example.Feature{
-			Kind: &example.Feature_Int64List{
-				Int64List: &example.Int64List{
-					Value: []int64{*f.Int},
-				},
-			},
-		}
-	} else if f.IntList != nil {
-		return &example.Feature{
-			Kind: &example.Feature_Int64List{
-				Int64List: &example.Int64List{
-					Value: *f.IntList,
-				},
-			},
-		}
-	} else if f.Bytes != nil {
-		return &example.Feature{
-			Kind: &example.Feature_BytesList{
-				BytesList: &example.BytesList{
-					Value: [][]byte{*f.Bytes},
-				},
-			},
-		}
-	} else if f.BytesList != nil {
-		return &example.Feature{
-			Kind: &example.Feature_BytesList{
-				BytesList: &example.BytesList{
-					Value: *f.BytesList,
-				},
-			},
-		}
-	}
-	return nil
-}
 func CallTF(ctx context.Context, servingAddr string, model string, version int64, signature string, modelData ModelData) (map[string]interface{}, error) {
 	mSpec := &apis.ModelSpec{
 		Name:          model,
@@ -129,42 +64,6 @@ func CallTF(ctx context.Context, servingAddr string, model string, version int64
 			}
 			feedData[n] = t
 		}
-	} else if len(modelData.TFFeatures) > 0 {
-		codec := encoding.GetCodec("proto")
-		if codec == nil {
-			return nil, fmt.Errorf("Codec for proto not found")
-		}
-		messages := make([][]byte, 0)
-		for _, f := range modelData.TFFeatures {
-			tfFeatures := map[string]*example.Feature{}
-			for k, v := range f {
-				fv := v.TFFeature()
-				if fv == nil {
-					return nil, fmt.Errorf("value for %s is empty", k)
-				}
-				tfFeatures[k] = fv
-			}
-			exp := &example.Example{
-				Features: &example.Features{
-					Feature: tfFeatures,
-				},
-			}
-			msg, err := codec.Marshal(exp)
-			if err != nil {
-				return nil, fmt.Errorf("Failed encode fetaure %v", err)
-			}
-			messages = append(messages, msg)
-		}
-		feedData["examples"] = &tf.TensorProto{
-			StringVal: messages,
-			Dtype:     tf.DataType_DT_STRING,
-			TensorShape: &tf.TensorShapeProto{
-				Dim: []*tf.TensorShapeProto_Dim{
-					{
-						Size: int64(len(messages)),
-					},
-				},
-			}}
 	}
 	req := &apis.PredictRequest{
 		ModelSpec: mSpec,

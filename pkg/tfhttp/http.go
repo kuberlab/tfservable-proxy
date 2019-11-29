@@ -189,121 +189,71 @@ func (proxy *Proxy) PredictHandler(w http.ResponseWriter, req *http.Request) {
 		if v, ok := req.MultipartForm.Value["out_filters"]; ok && len(v) > 0 {
 			model.OutFilter = strings.Split(v[0], ",")
 		}
-		if _, ok := req.MultipartForm.Value["raw_input"]; !ok {
-			model.TFFeatures = []map[string]tf.FeatureJSON{{}}
-			for k, v := range req.MultipartForm.Value {
-				p := strings.Split(k, "_")
-				if len(p) > 0 {
-					if parser, ok := parsers[p[0]]; ok {
-						feature := tf.FeatureJSON{}
-						_, valueParser := parser(&feature)
-						for _, s1 := range v {
-							for _, s2 := range strings.Split(s1, ",") {
-								if _, err := valueParser(s2); err != nil {
-									returnError = err
-									status = http.StatusBadRequest
-									return
-								}
+
+		model.Inputs = map[string]tf.InputJSON{}
+		for k, v := range req.MultipartForm.Value {
+			values := make([]interface{}, 0)
+			p := strings.Split(k, "_")
+			if len(p) > 0 {
+				if parser, ok := parsers[p[0]]; ok {
+					dtype, valueParser := parser()
+					for _, s1 := range v {
+						for _, s2 := range strings.Split(s1, ",") {
+							if iv, err := valueParser(s2); err != nil {
+								returnError = err
+								status = http.StatusBadRequest
+								return
+							} else {
+								values = append(values, iv)
 							}
 						}
-						model.TFFeatures[0][strings.Join(p[1:], "_")] = feature
 					}
-				}
+					model.Inputs[strings.Join(p[1:], "_")] = tf.InputJSON{
+						Dtype: dtype,
+						Data:  values,
+					}
+				} // else {
+				//	returnError = fmt.Errorf(
+				//		"Unsupported handler %v; currently supported: %v",
+				//		strings.Trim(p[0], "\n"),
+				//		parsersList(),
+				//	)
+				//	status = http.StatusBadRequest
+				//	return
+				//}
 			}
-			for k, fHeader := range req.MultipartForm.File {
-				p := strings.Split(k, "_")
-				if len(p) > 0 && len(fHeader) > 0 {
-					if parser, ok := binaryParsers[p[0]]; ok {
-						feature := tf.FeatureJSON{}
-						file, err := fHeader[0].Open()
-						if err != nil {
-							returnError = err
-							status = http.StatusBadRequest
-							return
-						}
-						defer file.Close()
-						data, err := ioutil.ReadAll(file)
-						if err != nil {
-							returnError = err
-							status = http.StatusBadRequest
-							return
-						}
-						parser(&feature, data)
-						model.TFFeatures[0][strings.Join(p[1:], "_")] = feature
-					} else {
-						returnError = fmt.Errorf("Unsupported binary hanldler for %s", p[0])
+		}
+
+		for k, fHeader := range req.MultipartForm.File {
+			p := strings.Split(k, "_")
+			if len(p) > 0 && len(fHeader) > 0 {
+				if parser, ok := binaryParsers[p[0]]; ok {
+					file, err := fHeader[0].Open()
+					if err != nil {
+						returnError = err
 						status = http.StatusBadRequest
 						return
 					}
-				}
-			}
-
-		} else {
-			model.Inputs = map[string]tf.InputJSON{}
-			for k, v := range req.MultipartForm.Value {
-				values := make([]interface{}, 0)
-				p := strings.Split(k, "_")
-				if len(p) > 0 {
-					if parser, ok := parsers[p[0]]; ok {
-						dtype, valueParser := parser(nil)
-						for _, s1 := range v {
-							for _, s2 := range strings.Split(s1, ",") {
-								if iv, err := valueParser(s2); err != nil {
-									returnError = err
-									status = http.StatusBadRequest
-									return
-								} else {
-									values = append(values, iv)
-								}
-							}
-						}
-						model.Inputs[strings.Join(p[1:], "_")] = tf.InputJSON{
-							Dtype: dtype,
-							Data:  values,
-						}
-					} // else {
-					//	returnError = fmt.Errorf(
-					//		"Unsupported handler %v; currently supported: %v",
-					//		strings.Trim(p[0], "\n"),
-					//		parsersList(),
-					//	)
-					//	status = http.StatusBadRequest
-					//	return
-					//}
-				}
-			}
-
-			for k, fHeader := range req.MultipartForm.File {
-				p := strings.Split(k, "_")
-				if len(p) > 0 && len(fHeader) > 0 {
-					if parser, ok := binaryParsers[p[0]]; ok {
-						file, err := fHeader[0].Open()
-						if err != nil {
-							returnError = err
-							status = http.StatusBadRequest
-							return
-						}
-						defer file.Close()
-						fileData, err := ioutil.ReadAll(file)
-						if err != nil {
-							returnError = err
-							status = http.StatusBadRequest
-							return
-						}
-						dtype, data := parser(nil, fileData)
-						model.Inputs[strings.Join(p[1:], "_")] = tf.InputJSON{
-							Dtype: dtype,
-							Data:  data,
-						}
-					} else {
-						returnError = fmt.Errorf(
-							"Unsupported binary handler %v; currently supported: %v",
-							strings.Trim(p[0], "\n"),
-							binaryParsersList(),
-						)
+					defer file.Close()
+					fileData, err := ioutil.ReadAll(file)
+					if err != nil {
+						returnError = err
 						status = http.StatusBadRequest
 						return
 					}
+					dtype, data := parser(fileData)
+					model.Inputs[strings.Join(p[1:], "_")] = tf.InputJSON{
+						Dtype: dtype,
+						Data:  data,
+					}
+				} else {
+					returnError = fmt.Errorf(
+						"Unsupported binary handler %v; currently supported: %v",
+						strings.Trim(p[0], "\n"),
+						binaryParsersList(),
+					)
+					status = http.StatusBadRequest
+					return
 				}
 			}
 		}
