@@ -36,9 +36,6 @@ type Proxy struct {
 
 func NewProxy(globalPrefix, predictPrefix string, staticRoot string) *Proxy {
 	predictPrefix = strings.TrimPrefix(predictPrefix, "/")
-	if !strings.HasSuffix(predictPrefix, "/") {
-		predictPrefix = predictPrefix + "/"
-	}
 
 	globalPrefix = strings.TrimPrefix(globalPrefix, "/")
 	globalPrefix = strings.TrimSuffix(globalPrefix, "/")
@@ -53,7 +50,12 @@ func NewProxy(globalPrefix, predictPrefix string, staticRoot string) *Proxy {
 	p := &Proxy{URIPrefix: predictPrefix, globalPrefix: globalPrefix}
 
 	p.router = mux.NewRouter()
+	p.router.StrictSlash(true)
+
 	p.router.PathPrefix(predictPrefix).HandlerFunc(p.PredictHandler)
+	p.router.PathPrefix("/api/v0.2/workspace/{workspace}/serving/{name}/tfproxy").HandlerFunc(p.PredictHandler)
+	p.router.PathPrefix("/api/v0.2/workspace/{workspace}/serving/{name}/tfproxy/{port}").HandlerFunc(p.PredictHandler)
+	p.router.PathPrefix("/api/v0.2/workspace/{workspace}/serving/{name}/tfproxy/{port}/{model}").HandlerFunc(p.PredictHandler)
 	p.router.PathPrefix(globalPrefix + "hls/").HandlerFunc(p.ProxyStreams)
 	p.router.PathPrefix(globalPrefix + "mjpg/").HandlerFunc(p.ProxyStreams)
 	if staticRoot != "" {
