@@ -355,7 +355,8 @@ func (proxy *Proxy) PredictHandler(w http.ResponseWriter, req *http.Request) {
 func parseRequestURI(prefix, uri string) (model string, version int64, signature string, err error) {
 	version = -1
 	if i := strings.Index(uri, prefix); i < 0 {
-		err = fmt.Errorf("Wrong request path, need prefix /%v", prefix)
+		//err = fmt.Errorf("Wrong request path, need prefix /%v", prefix)
+                return
 	} else {
 		uri = strings.TrimPrefix(uri[i+len(prefix):], "/")
 		p := strings.Split(uri, "/")
