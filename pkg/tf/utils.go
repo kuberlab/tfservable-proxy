@@ -11,9 +11,10 @@ import (
 	"unicode"
 
 	"github.com/Sirupsen/logrus"
-	tf "github.com/dreyk/tensorflow-serving-go/pkg/tensorflow/core/framework"
-	"github.com/dreyk/tensorflow-serving-go/pkg/tensorflow_serving/apis"
 	googleproto "github.com/golang/protobuf/ptypes/wrappers"
+	"github.com/kuberlab/tfservable-proxy/pkg/ml_serving"
+	tf "github.com/kuberlab/tfservable-proxy/pkg/tensorflow/core/framework"
+	"github.com/kuberlab/tfservable-proxy/pkg/tensorflow_serving/apis"
 	"google.golang.org/grpc"
 )
 
@@ -40,9 +41,35 @@ func (t *InputJSON) Tensor() (*tf.TensorProto, error) {
 }
 
 type ModelData struct {
-	Inputs      map[string]InputJSON     `json:"inputs,omitempty"`
-	OutFilter   []string                 `json:"out_filter,omitempty"`
-	OutMimeType string                   `json:"out_mime_type,omitempty"`
+	Inputs      map[string]InputJSON `json:"inputs,omitempty"`
+	OutFilter   []string             `json:"out_filter,omitempty"`
+	OutMimeType string               `json:"out_mime_type,omitempty"`
+}
+
+func CallServing(ctx context.Context, servingAddr string, jsonData string) (string, error) {
+	servReq := &ml_serving.PredictJSONData{
+		JsonString: jsonData,
+	}
+	conn, err := grpc.Dial(
+		servingAddr,
+		grpc.WithInsecure(),
+		grpc.WithDefaultCallOptions(grpc.MaxCallRecvMsgSize(MaxMsgLength)),
+	)
+	defer func() {
+		if conn != nil {
+			conn.Close()
+		}
+	}()
+	if err != nil {
+		return "", fmt.Errorf("Failed open grpc connection %v", err)
+	}
+	client := apis.NewPredictionServiceClient(conn)
+	resp, err := client.PredictJSON(ctx, servReq)
+	if err != nil {
+		return "", fmt.Errorf("Predict call failed %v", err)
+	}
+
+	return resp.JsonString, nil
 }
 
 func CallTF(ctx context.Context, servingAddr string, model string, version int64, signature string, modelData ModelData) (map[string]interface{}, error) {
@@ -435,7 +462,7 @@ func addBool(mtype tf.DataType, proto *tf.TensorProto, v bool) error {
 func addString(mtype tf.DataType, proto *tf.TensorProto, v string) error {
 	switch mtype {
 	case tf.DataType_DT_STRING:
-		//proto.TensorShape.Dim = append(proto.TensorShape.Dim, &tf.TensorShapeProto_Dim{
+		//ml_serving.TensorShape.Dim = append(ml_serving.TensorShape.Dim, &tf.TensorShapeProto_Dim{
 		//	Size: 1,
 		//})
 		bts, err := base64.StdEncoding.DecodeString(v)

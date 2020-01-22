@@ -46,12 +46,19 @@ func NewProxy(globalPrefix, predictPrefix string, staticRoot string) *Proxy {
 	}
 
 	predictPrefix = globalPrefix + predictPrefix
+	servingProxyPrefix := globalPrefix + "serving-proxy"
 
 	p := &Proxy{URIPrefix: predictPrefix, globalPrefix: globalPrefix}
 
 	p.router = mux.NewRouter()
 	p.router.StrictSlash(true)
 
+	// Serving-Proxy
+	p.router.PathPrefix(servingProxyPrefix).HandlerFunc(p.ServingProxyHandler)
+	p.router.PathPrefix("/api/v0.2/workspace/{workspace}/serving/{name}/proxy").HandlerFunc(p.ServingProxyHandler)
+	p.router.PathPrefix("/api/v0.2/workspace/{workspace}/serving/{name}/proxy/{port}").HandlerFunc(p.ServingProxyHandler)
+
+	// TF-Proxy
 	p.router.PathPrefix(predictPrefix).HandlerFunc(p.PredictHandler)
 	p.router.PathPrefix("/api/v0.2/workspace/{workspace}/serving/{name}/tfproxy").HandlerFunc(p.PredictHandler)
 	p.router.PathPrefix("/api/v0.2/workspace/{workspace}/serving/{name}/tfproxy/{port}").HandlerFunc(p.PredictHandler)
@@ -126,6 +133,65 @@ func (proxy *Proxy) ProxyStreams(w http.ResponseWriter, req *http.Request) {
 			}
 		}
 	}
+}
+
+func (proxy *Proxy) ServingProxyHandler(w http.ResponseWriter, req *http.Request) {
+	start := time.Now()
+	status := http.StatusOK
+	var returnError error
+	defer func() {
+		log.Printf("%s -> %d(%v)\n", req.RequestURI, status, time.Since(start))
+		if returnError != nil {
+			w.WriteHeader(status)
+			errStr := returnError.Error()
+			if !strings.HasSuffix(errStr, "\n") {
+				errStr += "\n"
+			}
+			w.Write([]byte(errStr))
+			logrus.Error(returnError.Error())
+		}
+	}()
+
+	if req.Method != "POST" {
+		returnError = errors.New("Only POST request is supported")
+		status = http.StatusMethodNotAllowed
+		return
+	}
+
+	addr := req.Header.Get("Proxy-Addr")
+	sport := req.Header.Get("Proxy-Port")
+	port := proxy.DefaultPort
+	if sport != "" {
+		if v, err := strconv.Atoi(sport); err == nil {
+			port = v
+		}
+	}
+	if addr == "" {
+		if proxy.DefaultAddress != "" {
+			addr = proxy.DefaultAddress
+		} else {
+			returnError = errors.New("Provide target address using header 'Proxy-Addr'")
+			status = http.StatusBadRequest
+			return
+		}
+	}
+	addr = fmt.Sprintf("%s:%d", addr, port)
+
+	data, err := ioutil.ReadAll(req.Body)
+	if err != nil {
+		returnError = err
+		status = http.StatusBadRequest
+		return
+	}
+	if len(data) < 1 {
+		returnError = errors.New("Empty data. Provide the data as json-string.")
+		status = http.StatusBadRequest
+		return
+	}
+
+	tContext, _ := context.WithTimeout(context.Background(), proxy.Timeout)
+	result, err := tf.CallServing(tContext, addr, string(data))
+	w.Write([]byte(result))
 }
 
 func (proxy *Proxy) PredictHandler(w http.ResponseWriter, req *http.Request) {
@@ -356,7 +422,7 @@ func parseRequestURI(prefix, uri string) (model string, version int64, signature
 	version = -1
 	if i := strings.Index(uri, prefix); i < 0 {
 		//err = fmt.Errorf("Wrong request path, need prefix /%v", prefix)
-                return
+		return
 	} else {
 		uri = strings.TrimPrefix(uri[i+len(prefix):], "/")
 		p := strings.Split(uri, "/")

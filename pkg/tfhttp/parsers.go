@@ -3,7 +3,7 @@ package tfhttp
 import (
 	"strconv"
 
-	tfcore "github.com/dreyk/tensorflow-serving-go/pkg/tensorflow/core/framework"
+	tfcore "github.com/kuberlab/tfservable-proxy/pkg/tensorflow/core/framework"
 )
 
 type propertyParser func() (tfcore.DataType, func(val string) (interface{}, error))
