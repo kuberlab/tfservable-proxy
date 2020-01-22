@@ -190,8 +190,13 @@ func (proxy *Proxy) ServingProxyHandler(w http.ResponseWriter, req *http.Request
 	}
 
 	tContext, _ := context.WithTimeout(context.Background(), proxy.Timeout)
-	result, err := tf.CallServing(tContext, addr, string(data))
-	w.Write([]byte(result))
+	result, err := tf.CallServing(tContext, addr, data)
+	if err != nil {
+		returnError = fmt.Errorf("Failed call %v", err)
+		status = http.StatusBadRequest
+		return
+	}
+	w.Write(result)
 }
 
 func (proxy *Proxy) PredictHandler(w http.ResponseWriter, req *http.Request) {

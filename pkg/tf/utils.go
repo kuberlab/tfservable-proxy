@@ -46,7 +46,7 @@ type ModelData struct {
 	OutMimeType string               `json:"out_mime_type,omitempty"`
 }
 
-func CallServing(ctx context.Context, servingAddr string, jsonData string) (string, error) {
+func CallServing(ctx context.Context, servingAddr string, jsonData []byte) ([]byte, error) {
 	servReq := &ml_serving.PredictJSONData{
 		JsonString: jsonData,
 	}
@@ -61,12 +61,12 @@ func CallServing(ctx context.Context, servingAddr string, jsonData string) (stri
 		}
 	}()
 	if err != nil {
-		return "", fmt.Errorf("Failed open grpc connection %v", err)
+		return nil, fmt.Errorf("Failed open grpc connection %v", err)
 	}
 	client := apis.NewPredictionServiceClient(conn)
 	resp, err := client.PredictJSON(ctx, servReq)
 	if err != nil {
-		return "", fmt.Errorf("Predict call failed %v", err)
+		return nil, fmt.Errorf("Predict call failed %v", err)
 	}
 
 	return resp.JsonString, nil
