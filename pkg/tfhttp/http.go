@@ -190,10 +190,10 @@ func (proxy *Proxy) ServingProxyHandler(w http.ResponseWriter, req *http.Request
 	}
 
 	tContext, _ := context.WithTimeout(context.Background(), proxy.Timeout)
-	result, err := tf.CallServing(tContext, addr, data)
+	result, err, errStatus := tf.CallServing(tContext, addr, data)
 	if err != nil {
-		returnError = fmt.Errorf("Failed call %v", err)
-		status = http.StatusBadRequest
+		returnError = err
+		status = errStatus
 		return
 	}
 	w.Write(result)
@@ -340,10 +340,10 @@ func (proxy *Proxy) PredictHandler(w http.ResponseWriter, req *http.Request) {
 		}
 	}
 	tContext, _ := context.WithTimeout(context.Background(), proxy.Timeout)
-	result, err := tf.CallTF(tContext, addr, modelName, modelVersion, modelSinature, model)
+	result, err, errStatus := tf.CallTF(tContext, addr, modelName, modelVersion, modelSinature, model)
 	if err != nil {
-		returnError = fmt.Errorf("Failed call %v", err)
-		status = http.StatusBadRequest
+		returnError = err
+		status = errStatus
 		return
 	}
 	if len(model.OutFilter) > 0 {

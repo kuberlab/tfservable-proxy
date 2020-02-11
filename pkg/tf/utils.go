@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"math"
 	"reflect"
+	"strings"
 	"unicode"
 
 	"github.com/Sirupsen/logrus"
@@ -46,7 +47,8 @@ type ModelData struct {
 	OutMimeType string               `json:"out_mime_type,omitempty"`
 }
 
-func CallServing(ctx context.Context, servingAddr string, jsonData []byte) ([]byte, error) {
+func CallServing(ctx context.Context, servingAddr string, jsonData []byte) ([]byte, error, int) {
+	errStatus := 500
 	servReq := &ml_serving.PredictJSONData{
 		JsonString: jsonData,
 	}
@@ -61,18 +63,26 @@ func CallServing(ctx context.Context, servingAddr string, jsonData []byte) ([]by
 		}
 	}()
 	if err != nil {
-		return nil, fmt.Errorf("Failed open grpc connection %v", err)
+		if strings.Contains(err.Error(), "no such host") {
+			errStatus = 404
+		}
+		return nil, fmt.Errorf("Failed open grpc connection %v", err), errStatus
 	}
 	client := apis.NewPredictionServiceClient(conn)
 	resp, err := client.PredictJSON(ctx, servReq)
 	if err != nil {
-		return nil, fmt.Errorf("Predict call failed %v", err)
+		if strings.Contains(err.Error(), "no such host") {
+			errStatus = 404
+		}
+		return nil, fmt.Errorf("PredictJSON call failed %v", err), errStatus
 	}
 
-	return resp.JsonString, nil
+	return resp.JsonString, nil, 200
 }
 
-func CallTF(ctx context.Context, servingAddr string, model string, version int64, signature string, modelData ModelData) (map[string]interface{}, error) {
+func CallTF(ctx context.Context, servingAddr string, model string, version int64,
+	signature string, modelData ModelData) (map[string]interface{}, error, int) {
+	errStatus := 500
 	mSpec := &apis.ModelSpec{
 		Name:          model,
 		SignatureName: signature,
@@ -87,7 +97,8 @@ func CallTF(ctx context.Context, servingAddr string, model string, version int64
 		for n, v := range modelData.Inputs {
 			t, err := v.Tensor()
 			if err != nil {
-				return nil, fmt.Errorf("Invalid input '%s' %v", n, err)
+				errStatus = 400
+				return nil, fmt.Errorf("Invalid input '%s' %v", n, err), errStatus
 			}
 			feedData[n] = t
 		}
@@ -107,18 +118,24 @@ func CallTF(ctx context.Context, servingAddr string, model string, version int64
 		}
 	}()
 	if err != nil {
-		return nil, fmt.Errorf("Failed open grpc connection %v", err)
+		if strings.Contains(err.Error(), "no such host") {
+			errStatus = 404
+		}
+		return nil, fmt.Errorf("Failed open grpc connection %v", err), errStatus
 	}
 	client := apis.NewPredictionServiceClient(conn)
 	resp, err := client.Predict(ctx, req)
 	if err != nil {
-		return nil, fmt.Errorf("Predict call failed %v", err)
+		if strings.Contains(err.Error(), "no such host") {
+			errStatus = 404
+		}
+		return nil, fmt.Errorf("Predict call failed %v", err), errStatus
 	}
 	result := map[string]interface{}{}
 	for k, v := range resp.Outputs {
 		result[k] = tensor2Go(v)
 	}
-	return result, nil
+	return result, nil, 200
 }
 
 func tensor2Go(t *tf.TensorProto) interface{} {
