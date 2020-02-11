@@ -63,7 +63,7 @@ func CallServing(ctx context.Context, servingAddr string, jsonData []byte) ([]by
 		}
 	}()
 	if err != nil {
-		if strings.Contains(err.Error(), "no such host") {
+		if NoSuchHostError(err) {
 			errStatus = 404
 		}
 		return nil, fmt.Errorf("Failed open grpc connection %v", err), errStatus
@@ -71,7 +71,7 @@ func CallServing(ctx context.Context, servingAddr string, jsonData []byte) ([]by
 	client := apis.NewPredictionServiceClient(conn)
 	resp, err := client.PredictJSON(ctx, servReq)
 	if err != nil {
-		if strings.Contains(err.Error(), "no such host") {
+		if NoSuchHostError(err) {
 			errStatus = 404
 		}
 		return nil, fmt.Errorf("PredictJSON call failed %v", err), errStatus
@@ -118,7 +118,7 @@ func CallTF(ctx context.Context, servingAddr string, model string, version int64
 		}
 	}()
 	if err != nil {
-		if strings.Contains(err.Error(), "no such host") {
+		if NoSuchHostError(err) {
 			errStatus = 404
 		}
 		return nil, fmt.Errorf("Failed open grpc connection %v", err), errStatus
@@ -126,7 +126,7 @@ func CallTF(ctx context.Context, servingAddr string, model string, version int64
 	client := apis.NewPredictionServiceClient(conn)
 	resp, err := client.Predict(ctx, req)
 	if err != nil {
-		if strings.Contains(err.Error(), "no such host") {
+		if NoSuchHostError(err) {
 			errStatus = 404
 		}
 		return nil, fmt.Errorf("Predict call failed %v", err), errStatus
@@ -136,6 +136,10 @@ func CallTF(ctx context.Context, servingAddr string, model string, version int64
 		result[k] = tensor2Go(v)
 	}
 	return result, nil, 200
+}
+
+func NoSuchHostError(err error) bool {
+	return strings.Contains(err.Error(), "no such host") || strings.Contains(err.Error(), "no route to host")
 }
 
 func tensor2Go(t *tf.TensorProto) interface{} {
