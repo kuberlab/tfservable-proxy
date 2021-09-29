@@ -11,7 +11,7 @@ import (
 	"strings"
 	"unicode"
 
-	"github.com/Sirupsen/logrus"
+	"github.com/sirupsen/logrus"
 	googleproto "github.com/golang/protobuf/ptypes/wrappers"
 	"github.com/kuberlab/tfservable-proxy/pkg/ml_serving"
 	tf "github.com/kuberlab/tfservable-proxy/pkg/tensorflow/core/framework"

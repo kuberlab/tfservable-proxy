@@ -12,7 +12,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/Sirupsen/logrus"
+	"github.com/sirupsen/logrus"
 	"github.com/gorilla/mux"
 	"github.com/json-iterator/go"
 	"github.com/kuberlab/tfservable-proxy/pkg/tf"
